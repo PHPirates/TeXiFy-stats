@@ -1,0 +1,1 @@
+query ViewLogin { viewer { login }}

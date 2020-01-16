@@ -18,7 +18,8 @@ plugins {
 
     application
     kotlin("jvm") version kotlinVersion
-    java // Required by at least JUnit.
+    java
+    idea
 
     // Plugin which checks for dependency updates with help/dependencyUpdates task.
     id("com.github.ben-manes.versions") version "0.27.0"
@@ -31,8 +32,10 @@ plugins {
 dependencies {
     implementation(kotlin("stdlib"))
 
+    // Apollo and dependencies
     implementation("com.apollographql.apollo:apollo-runtime:1.2.2")
 
+    implementation("com.squareup.okio:okio:2.4.3")
     implementation("org.jetbrains:annotations:13.0")
     testImplementation("org.jetbrains:annotations:13.0")
 }
@@ -42,6 +45,16 @@ repositories {
     mavenLocal()
     jcenter()
 }
+
+//sourceSets["main"].java.srcDir("build/generated/source/apollo/classes/main/nl/deltadak/texifystats")
+
+//val generatedSourcesPath = file("build/generated/source/apollo/classes")
+
+//tasks.withType<Idea> {
+//    module {
+//        generatedSourceDirs.add(generatedSourcesPath)
+//    }
+//}
 
 tasks.withType<com.apollographql.apollo.gradle.ApolloCodegenTask> {
     generateKotlinModels.set(true)
