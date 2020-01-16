@@ -46,16 +46,7 @@ repositories {
     jcenter()
 }
 
-//sourceSets["main"].java.srcDir("build/generated/source/apollo/classes/main/nl/deltadak/texifystats")
-
-//val generatedSourcesPath = file("build/generated/source/apollo/classes")
-
-//tasks.withType<Idea> {
-//    module {
-//        generatedSourceDirs.add(generatedSourcesPath)
-//    }
-//}
-
 tasks.withType<com.apollographql.apollo.gradle.ApolloCodegenTask> {
     generateKotlinModels.set(true)
+    exclude("**/schema.graphql")
 }

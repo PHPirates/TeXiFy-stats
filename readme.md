@@ -12,5 +12,4 @@ This project uses
 
 The JS GraphQL IntelliJ plugin is recommended.
 
-For downloading the schema, install the Apollo cli interface and then see https://www.apollographql.com/docs/android/essentials/get-started/
-For GitHub this would be `apollo schema:download --endpoint=https://api.github.com/graphql --header="Authorization: Bearer mytoken"`
+Documentation about the setup of the project: https://stackoverflow.com/questions/59776117/how-to-use-apollo-android-from-kotlin-but-without-android
