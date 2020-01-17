@@ -1,0 +1,9 @@
+query ViewIssuesCount {
+    repository(name: "TeXiFy-IDEA", owner: "Hannah-Sten") {
+        issues(last: 3) {
+            nodes {
+                title
+            }
+        }
+    }
+}

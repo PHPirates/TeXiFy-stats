@@ -27,6 +27,7 @@ plugins {
     // Plugin which can update Gradle dependencies, use help/useLatestVersions
     id("se.patrikerdes.use-latest-versions") version "0.2.13"
 
+    id("org.openjfx.javafxplugin") version "0.0.8"
 }
 
 dependencies {
@@ -34,19 +35,31 @@ dependencies {
 
     // Apollo and dependencies
     implementation("com.apollographql.apollo:apollo-runtime:1.2.2")
-
     implementation("com.squareup.okio:okio:2.4.3")
     implementation("org.jetbrains:annotations:13.0")
     testImplementation("org.jetbrains:annotations:13.0")
+
+    // Lets-plot
+    implementation("org.openjfx:javafx-swing:13")
+    implementation("org.openjfx:javafx:13")
+    implementation("org.jetbrains.lets-plot:lets-plot-jfx:1.1.1-SNAPSHOT")
+    implementation("org.jetbrains.lets-plot:lets-plot-common:1.1.1-SNAPSHOT")
+    implementation("org.jetbrains.lets-plot:lets-plot-kotlin-api:0.0.8-SNAPSHOT")
+    implementation("org.jetbrains.lets-plot:kotlin-frontend-api:0.0.8-SNAPSHOT")
 }
 
 repositories {
     mavenCentral()
     mavenLocal()
     jcenter()
+    maven("https://jetbrains.bintray.com/lets-plot-maven")
 }
 
 tasks.withType<com.apollographql.apollo.gradle.ApolloCodegenTask> {
     generateKotlinModels.set(true)
     exclude("**/schema.graphql")
+}
+
+javafx {
+    modules("javafx.controls" ,"javafx.swing")
 }
