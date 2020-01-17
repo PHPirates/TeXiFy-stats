@@ -1,9 +1,10 @@
-package nl.deltadak.texifystats
+package nl.deltadak.texifystats.api
 
 import com.apollographql.apollo.ApolloCall
 import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.Response
 import com.apollographql.apollo.exception.ApolloException
+import nl.deltadak.texifystats.ViewLoginQuery
 import okhttp3.OkHttpClient
 
 

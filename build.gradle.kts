@@ -64,6 +64,7 @@ javafx {
     modules("javafx.controls" ,"javafx.swing")
 }
 
+// Required by the GitHub Action
 application {
     mainClassName = "nl.deltadak.texifystats.LetsPlotExample"
 }
