@@ -1,31 +1,14 @@
 package nl.deltadak.texifystats.api
 
 import com.apollographql.apollo.ApolloCall
-import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.Response
 import com.apollographql.apollo.exception.ApolloException
 import nl.deltadak.texifystats.ViewLoginQuery
-import okhttp3.OkHttpClient
+import kotlin.system.exitProcess
 
 
 fun main(args: Array<String>) {
-    val serverUrl = "https://api.github.com/graphql"
-
-    val authHeader = args[0]
-
-    // Add authentication header for GitHub
-    val okHttpClient = OkHttpClient.Builder()
-            .addInterceptor { chain ->
-                val builder = chain.request().newBuilder()
-                builder.header("Authorization", "Bearer $authHeader")
-                chain.proceed(builder.build())
-            }
-            .build()
-
-    val apolloClient = ApolloClient.builder()
-            .serverUrl(serverUrl)
-            .okHttpClient(okHttpClient)
-            .build()
+    val apolloClient = getApolloClient(args[0])
 
     val query = ViewLoginQuery()
 
@@ -39,6 +22,7 @@ fun main(args: Array<String>) {
             } else {
                 println(dataResponse.data()?.viewer?.login)
             }
+            exitProcess(0)
         }
 
         override fun onFailure(e: ApolloException) {
