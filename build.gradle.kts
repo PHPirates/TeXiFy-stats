@@ -63,3 +63,7 @@ tasks.withType<com.apollographql.apollo.gradle.ApolloCodegenTask> {
 javafx {
     modules("javafx.controls" ,"javafx.swing")
 }
+
+application {
+    mainClassName = "nl.deltadak.texifystats.LetsPlotExample"
+}
