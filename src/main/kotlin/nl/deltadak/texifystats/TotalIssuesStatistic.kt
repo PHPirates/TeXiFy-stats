@@ -1,6 +1,7 @@
 package nl.deltadak.texifystats
 
 import com.apollographql.apollo.ApolloCall
+import com.apollographql.apollo.api.Input
 import com.apollographql.apollo.api.Response
 import com.apollographql.apollo.exception.ApolloException
 import jetbrains.letsPlot.geom.geom_line
@@ -64,7 +65,7 @@ fun main(args: Array<String>) {
 
     val apolloClient = getApolloClient(args[0])
 
-    val query = ViewIssuesCountQuery()
+    val query = ViewIssuesCountQuery("TeXiFy-IDEA", "Hannah-Sten", Input.fromNullable(null))
 
     apolloClient.query(query).enqueue(object : ApolloCall.Callback<ViewIssuesCountQuery.Data?>() {
         override fun onResponse(dataResponse: Response<ViewIssuesCountQuery.Data?>) {

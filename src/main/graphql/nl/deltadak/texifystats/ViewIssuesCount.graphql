@@ -1,6 +1,7 @@
-query ViewIssuesCount {
-    repository(name: "TeXiFy-IDEA", owner: "Hannah-Sten") {
-        issues(last: 100) {
+query ViewIssuesCount($repository: String!, $owner: String!, $cursor: String) {
+    repository(name: $repository, owner: $owner) {
+        # 100 is the maximum to request in one query
+        issues(first: 10, after: $cursor) {
             nodes {
                 createdAt
                 closedAt
