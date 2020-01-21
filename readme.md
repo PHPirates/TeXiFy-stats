@@ -22,4 +22,4 @@ This project requires Java 11 or later, the following instructions have been tes
 * In File > Project Structure > Project change the Project SDK and language level both to 13.
 * In File > Settings > Build, Execution, Deployment > Build Tools > Gradle change Gradle JVM to 13.
 
-![](figures/lineplot-100-issues.png)
+![](figures/lineplot-total-issues.png)

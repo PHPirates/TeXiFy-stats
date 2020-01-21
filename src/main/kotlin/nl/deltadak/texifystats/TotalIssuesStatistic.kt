@@ -18,6 +18,9 @@ enum class Action { OPEN, CLOSE }
 /** An issue was opened or closed. */
 data class OpenCloseEvent(val time: Instant, val action: Action)
 
+/**
+ * Show total open issues over time.
+ */
 class TotalIssuesStatistic(private val githubToken: String) {
 
     private val eventList = mutableListOf<OpenCloseEvent>()
@@ -41,11 +44,13 @@ class TotalIssuesStatistic(private val githubToken: String) {
         // If we have paginated to the end
         if (edges?.isNullOrEmpty() == true) {
             createPlot()
-        }
+        } else {
+            println("Rate limit remaining: ${data.rateLimit?.remaining}")
 
-        // Next page
-        val cursor = edges.last()?.cursor
-        runQuery(cursor)
+            // Next page
+            val cursor = edges.last()?.cursor
+            runQuery(cursor)
+        }
     }
 
     private fun createPlot() {
@@ -76,6 +81,8 @@ class TotalIssuesStatistic(private val githubToken: String) {
 
     /**
      * Run the GraphQL query, given a cursor.
+     *
+     * When the query is received, if needed in the response handling a new query will be sent for the next page.
      */
     fun runQuery(cursor: String? = null) {
         val apolloClient = getApolloClient(githubToken)
