@@ -26,10 +26,12 @@ val EXECUTOR_JFX = { r: () -> Unit ->
     }
 }
 
+enum class PlotSize { SMALL, LARGE }
+
 /**
  * Adapted from https://github.com/JetBrains/lets-plot-kotlin/blob/b165c405be284fca5b8dece378a50879601bf12b/demo/jvm-javafx/src/main/kotlin/minimalDemo/Main.kt
  */
-fun showPlot(plot: Plot) {
+fun showPlot(plot: Plot, windowSize: PlotSize = PlotSize.LARGE) {
     SwingUtilities.invokeLater {
 
         // Create JFXPanel showing the plot.
@@ -37,7 +39,11 @@ fun showPlot(plot: Plot) {
         val screenSize: Dimension = Toolkit.getDefaultToolkit().screenSize
         val width = screenSize.getWidth()
         val height = screenSize.getHeight()
-        val plotSize = DoubleVector(width - 70, height - 70)
+        val plotSize = if (windowSize == PlotSize.SMALL) {
+            DoubleVector(600.0, 300.0)
+        } else {
+            DoubleVector(width - 70, height - 70)
+        }
 
         val component =
                 MonolithicAwt.buildPlotFromRawSpecs(plotSpec, plotSize, COMPONENT_FACTORY_JFX, EXECUTOR_JFX) {

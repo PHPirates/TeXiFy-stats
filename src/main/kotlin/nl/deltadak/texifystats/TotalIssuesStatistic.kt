@@ -9,6 +9,7 @@ import jetbrains.letsPlot.ggplot
 import jetbrains.letsPlot.ggtitle
 import jetbrains.letsPlot.scale.scale_x_datetime
 import nl.deltadak.texifystats.api.getApolloClient
+import nl.deltadak.texifystats.plots.PlotSize
 import nl.deltadak.texifystats.plots.showPlot
 import java.time.Instant
 
@@ -19,43 +20,65 @@ enum class Action { OPEN, CLOSE }
 data class OpenCloseEvent(val time: Instant, val action: Action)
 
 /**
- * Show total open issues over time.
+ * Show total open issues over time, and total open pull requests over time.
  *
  * @param useAllData Whether to use all data available for the plot. If false, only one query will be done (faster).
  */
 class TotalIssuesStatistic(private val githubToken: String, private val useAllData: Boolean = true) {
 
-    private val eventList = mutableListOf<OpenCloseEvent>()
+    private val issuesEventList = mutableListOf<OpenCloseEvent>()
+    private val prEventList = mutableListOf<OpenCloseEvent>()
 
-    fun receiveData(data: ViewIssuesCountQuery.Data) {
+    // We have to remember the cursors to continue using them if the other type (issue, pull request) needs to continue paging
+    private var issuesCursor: String? = null
+    private var prCursor: String? = null
 
-        val edges = data.repository?.issues?.edges
+    // Unfortunately Edge and Edge1 are separate classes, so we can't abstract the foreach loop
+    @Suppress("DuplicatedCode")
+    fun receiveData(data: TotalIssuesQuery.Data) {
 
-        // Read open and close dates
-        edges?.forEach {
+        val issueEdges = data.repository?.issues?.edges
+
+        // Read open and close dates for issues
+        issueEdges?.forEach {
             val node = it?.node
             val createdAt = Instant.parse(node?.createdAt.toString())
-            eventList.add(OpenCloseEvent(createdAt, Action.OPEN))
+            issuesEventList.add(OpenCloseEvent(createdAt, Action.OPEN))
             // Issues that are not closed are still open
             if (node?.closedAt != null) {
                 val closedAt = Instant.parse(node.closedAt.toString())
-                eventList.add(OpenCloseEvent(closedAt, Action.CLOSE))
+                issuesEventList.add(OpenCloseEvent(closedAt, Action.CLOSE))
             }
         }
 
-        // If we have paginated to the end
-        if (edges?.isNullOrEmpty() == true || !useAllData) {
-            createPlot()
+        val prEdges = data.repository?.pullRequests?.edges
+
+        // Same for pull requests
+        prEdges?.forEach {
+            prEventList.add(OpenCloseEvent(Instant.parse(it?.node?.createdAt.toString()), Action.OPEN))
+            if (it?.node?.closedAt != null) {
+                prEventList.add(OpenCloseEvent(Instant.parse(it.node.closedAt.toString()), Action.CLOSE))
+            }
+        }
+
+        // If we have paginated to the end for both issues and pull requests
+        if ((issueEdges?.isNullOrEmpty() == true && prEdges?.isNullOrEmpty() == true) || !useAllData) {
+            createPlot(issuesEventList, "issues")
+            createPlot(prEventList, "pull requests")
         } else {
             println("Rate limit remaining: ${data.rateLimit?.remaining}")
 
             // Next page
-            val cursor = edges.last()?.cursor
-            runQuery(cursor)
+            issuesCursor = if (issueEdges.isNotEmpty()) issueEdges.last()?.cursor else issuesCursor
+            prCursor = if (prEdges?.isNotEmpty() == true) prEdges.last()?.cursor else prCursor
+            runQuery(issuesCursor, prCursor)
         }
     }
 
-    private fun createPlot() {
+    /**
+     * @param type Used for the title.
+     */
+    private fun createPlot(eventList: MutableList<OpenCloseEvent>, type: String = "issues") {
         // Sort the events in order to walk through them and update the total issues counter for each event
         eventList.sortBy { it.time }
 
@@ -76,23 +99,23 @@ class TotalIssuesStatistic(private val githubToken: String, private val useAllDa
                 "count" to totalIssuesList
         )
 
-        val plot = ggplot(plotData) + geom_line { x = "date"; y = "count" } + scale_x_datetime() + ggtitle("Total open issues over time")
+        val plot = ggplot(plotData) + geom_line { x = "date"; y = "count" } + scale_x_datetime() + ggtitle("Total open $type over time")
 
-        showPlot(plot)
+        showPlot(plot, PlotSize.SMALL)
     }
 
     /**
-     * Run the GraphQL query, given a cursor.
+     * Run the GraphQL query, given an issues and a pull request cursor.
      *
      * When the query is received, if needed in the response handling a new query will be sent for the next page.
      */
-    fun runQuery(cursor: String? = null) {
+    fun runQuery(issuesCursor: String? = null, pullRequestCursor: String? = null) {
         val apolloClient = getApolloClient(githubToken)
 
-        val query = ViewIssuesCountQuery("TeXiFy-IDEA", "Hannah-Sten", Input.fromNullable(cursor))
+        val query = TotalIssuesQuery("TeXiFy-IDEA", "Hannah-Sten", Input.fromNullable(issuesCursor), Input.fromNullable(pullRequestCursor), 100)
 
-        apolloClient.query(query).enqueue(object : ApolloCall.Callback<ViewIssuesCountQuery.Data?>() {
-            override fun onResponse(dataResponse: Response<ViewIssuesCountQuery.Data?>) {
+        apolloClient.query(query).enqueue(object : ApolloCall.Callback<TotalIssuesQuery.Data?>() {
+            override fun onResponse(dataResponse: Response<TotalIssuesQuery.Data?>) {
                 val data = dataResponse.data()
 
                 if (data == null) {
@@ -116,5 +139,5 @@ fun main(args: Array<String>) {
         throw IllegalArgumentException("You need to provide the GitHub token")
     }
 
-    TotalIssuesStatistic(args[0]).runQuery()
+    TotalIssuesStatistic(args[0], true).runQuery()
 }

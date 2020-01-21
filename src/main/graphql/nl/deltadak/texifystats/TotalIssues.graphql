@@ -1,0 +1,26 @@
+query TotalIssues($repository: String!, $owner: String!, $issuesCursor: String, $pullRequestsCursor: String, $issues: Int!) {
+    repository(name: $repository, owner: $owner) {
+        # 100 is the maximum to request in one query
+        issues(first: $issues, after: $issuesCursor) {
+            edges {
+                node {
+                    createdAt
+                    closedAt
+                }
+                cursor
+            }
+        }
+        pullRequests(first: $issues, after: $pullRequestsCursor) {
+            edges {
+                node {
+                    createdAt
+                    closedAt
+                }
+                cursor
+            }
+        }
+    }
+    rateLimit {
+        remaining
+    }
+}
