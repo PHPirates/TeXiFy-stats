@@ -1,7 +1,7 @@
-query ViewIssuesCount($repository: String!, $owner: String!, $cursor: String) {
+query ViewIssuesCount($repository: String!, $owner: String!, $cursor: String, $issues: Int!) {
     repository(name: $repository, owner: $owner) {
         # 100 is the maximum to request in one query
-        issues(first: 100, after: $cursor) {
+        issues(first: $issues, after: $cursor) {
             edges {
                 node {
                     createdAt

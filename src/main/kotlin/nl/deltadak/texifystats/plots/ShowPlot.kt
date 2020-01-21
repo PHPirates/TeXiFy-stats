@@ -9,9 +9,11 @@ import jetbrains.datalore.vis.svg.SvgSvgElement
 import jetbrains.letsPlot.intern.Plot
 import jetbrains.letsPlot.intern.toSpec
 import java.awt.Dimension
+import java.awt.Toolkit
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
 import javax.swing.WindowConstants
+
 
 // Setup
 val COMPONENT_FACTORY_JFX = { svg: SvgSvgElement -> SceneMapperJfxPanel(svg, listOf(Style.JFX_PLOT_STYLESHEET)) }
@@ -32,7 +34,10 @@ fun showPlot(plot: Plot) {
 
         // Create JFXPanel showing the plot.
         val plotSpec = plot.toSpec()
-        val plotSize = DoubleVector(600.0, 300.0)
+        val screenSize: Dimension = Toolkit.getDefaultToolkit().screenSize
+        val width = screenSize.getWidth()
+        val height = screenSize.getHeight()
+        val plotSize = DoubleVector(width - 70, height - 70)
 
         val component =
                 MonolithicAwt.buildPlotFromRawSpecs(plotSpec, plotSize, COMPONENT_FACTORY_JFX, EXECUTOR_JFX) {

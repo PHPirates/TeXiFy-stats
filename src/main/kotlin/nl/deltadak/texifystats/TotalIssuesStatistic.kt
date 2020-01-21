@@ -20,8 +20,10 @@ data class OpenCloseEvent(val time: Instant, val action: Action)
 
 /**
  * Show total open issues over time.
+ *
+ * @param useAllData Whether to use all data available for the plot. If false, only one query will be done (faster).
  */
-class TotalIssuesStatistic(private val githubToken: String) {
+class TotalIssuesStatistic(private val githubToken: String, private val useAllData: Boolean = true) {
 
     private val eventList = mutableListOf<OpenCloseEvent>()
 
@@ -42,7 +44,7 @@ class TotalIssuesStatistic(private val githubToken: String) {
         }
 
         // If we have paginated to the end
-        if (edges?.isNullOrEmpty() == true) {
+        if (edges?.isNullOrEmpty() == true || !useAllData) {
             createPlot()
         } else {
             println("Rate limit remaining: ${data.rateLimit?.remaining}")
