@@ -1,0 +1,13 @@
+query OpenIssues($repository: String!, $owner: String!) {
+    repository(name: $repository, owner: $owner) {
+        issues(first: 100, states: [OPEN]) {
+            nodes {
+                number
+                createdAt
+            }
+        }
+    }
+    rateLimit {
+        remaining
+    }
+}

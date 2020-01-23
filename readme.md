@@ -24,3 +24,4 @@ This project requires Java 11 or later, the following instructions have been tes
 
 ![](figures/lineplot-total-issues.png)
 ![](figures/lineplot-total-prs.png)
+![](figures/histogram-creation-dates.png)

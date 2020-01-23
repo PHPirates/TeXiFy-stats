@@ -101,7 +101,7 @@ class TotalIssuesStatistic(private val githubToken: String, private val useAllDa
 
         val plot = ggplot(plotData) + geom_line { x = "date"; y = "count" } + scale_x_datetime() + ggtitle("Total open $type over time")
 
-        showPlot(plot, PlotSize.SMALL)
+        showPlot(plot, PlotSize.LARGE)
     }
 
     /**
