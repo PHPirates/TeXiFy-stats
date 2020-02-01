@@ -23,8 +23,9 @@ data class OpenCloseEvent(val time: Instant, val action: Action)
  * Show total open issues over time, and total open pull requests over time.
  *
  * @param useAllData Whether to use all data available for the plot. If false, only one query will be done (faster).
+ * @param onlyOpenIssues Whether to show only open issues over time, or all issues (so total number of submitted issues).
  */
-class TotalIssuesStatistic(private val githubToken: String, private val useAllData: Boolean = true) {
+class TotalIssuesStatistic(private val githubToken: String, private val useAllData: Boolean = true, private val onlyOpenIssues: Boolean = true) {
 
     private val issuesEventList = mutableListOf<OpenCloseEvent>()
     private val prEventList = mutableListOf<OpenCloseEvent>()
@@ -45,7 +46,7 @@ class TotalIssuesStatistic(private val githubToken: String, private val useAllDa
             val createdAt = Instant.parse(node?.createdAt.toString())
             issuesEventList.add(OpenCloseEvent(createdAt, Action.OPEN))
             // Issues that are not closed are still open
-            if (node?.closedAt != null) {
+            if (node?.closedAt != null && onlyOpenIssues) {
                 val closedAt = Instant.parse(node.closedAt.toString())
                 issuesEventList.add(OpenCloseEvent(closedAt, Action.CLOSE))
             }
@@ -56,7 +57,7 @@ class TotalIssuesStatistic(private val githubToken: String, private val useAllDa
         // Same for pull requests
         prEdges?.forEach {
             prEventList.add(OpenCloseEvent(Instant.parse(it?.node?.createdAt.toString()), Action.OPEN))
-            if (it?.node?.closedAt != null) {
+            if (it?.node?.closedAt != null && onlyOpenIssues) {
                 prEventList.add(OpenCloseEvent(Instant.parse(it.node.closedAt.toString()), Action.CLOSE))
             }
         }
@@ -139,5 +140,5 @@ fun main(args: Array<String>) {
         throw IllegalArgumentException("You need to provide the GitHub token")
     }
 
-    TotalIssuesStatistic(args[0], true).runQuery()
+    TotalIssuesStatistic(args[0], useAllData = true, onlyOpenIssues = true).runQuery()
 }

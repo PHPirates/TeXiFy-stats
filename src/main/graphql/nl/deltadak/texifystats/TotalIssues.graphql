@@ -1,3 +1,4 @@
+# Query to find the total number of open issues over time
 query TotalIssues($repository: String!, $owner: String!, $issuesCursor: String, $pullRequestsCursor: String, $issues: Int!) {
     repository(name: $repository, owner: $owner) {
         # 100 is the maximum to request in one query
