@@ -44,6 +44,8 @@ repositories {
 
 apollo {
     generateKotlinModels.set(true)
+    graphqlSourceDirectorySet.srcDir("src/main/graphql")
+    graphqlSourceDirectorySet.include("**/*.graphql")
     graphqlSourceDirectorySet.exclude("**/schema.graphql")
 }
 
