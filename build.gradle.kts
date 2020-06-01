@@ -50,10 +50,14 @@ apollo {
 }
 
 javafx {
-    modules("javafx.controls" ,"javafx.swing")
+    modules("javafx.controls", "javafx.swing")
 }
 
 // Required by the GitHub Action
 application {
     mainClassName = "nl.deltadak.texifystats.LetsPlotExample"
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    kotlinOptions.jvmTarget = "1.8"
 }

@@ -38,11 +38,11 @@ class TotalIssuesStatistic(private val githubToken: String, private val useAllDa
     @Suppress("DuplicatedCode")
     fun receiveData(data: TotalIssuesQuery.Data) {
 
-        val issueEdges = data.repository.issues.edges
+        val issueEdges = data.repository?.issues?.edges ?: return
 
         // Read open and close dates for issues
         issueEdges.forEach {
-            val node = it.node
+            val node = it?.node ?: return@forEach
             val createdAt = Instant.parse(node.createdAt.toString())
             issuesEventList.add(OpenCloseEvent(createdAt, Action.OPEN))
             // Issues that are not closed are still open
@@ -55,24 +55,24 @@ class TotalIssuesStatistic(private val githubToken: String, private val useAllDa
         val prEdges = data.repository.pullRequests.edges
 
         // Same for pull requests
-        prEdges.forEach {
-            prEventList.add(OpenCloseEvent(Instant.parse(it.node.createdAt.toString()), Action.OPEN))
-            if (it.node.closedAt != null && onlyOpenIssues) {
+        prEdges?.forEach {
+            prEventList.add(OpenCloseEvent(Instant.parse(it?.node?.createdAt.toString()), Action.OPEN))
+            if (it?.node?.closedAt != null && onlyOpenIssues) {
                 prEventList.add(OpenCloseEvent(Instant.parse(it.node.closedAt.toString()), Action.CLOSE))
             }
         }
 
         // If we have paginated to the end for both issues and pull requests
-        if ((issueEdges.isNullOrEmpty() == true && prEdges.isNullOrEmpty() == true) || !useAllData) {
+        if ((issueEdges.isNullOrEmpty() && prEdges.isNullOrEmpty()) || !useAllData) {
             createPlot(issuesEventList, "issues")
             createPlot(prEventList, "pull requests")
         }
         else {
-            println("Rate limit remaining: ${data.rateLimit.remaining}")
+            println("Rate limit remaining: ${data.rateLimit?.remaining}")
 
             // Next page
-            issuesCursor = if (issueEdges.isNotEmpty()) issueEdges.last().cursor else issuesCursor
-            prCursor = if (prEdges.isNotEmpty() == true) prEdges.last().cursor else prCursor
+            issuesCursor = if (issueEdges.isNotEmpty()) issueEdges.last()?.cursor else issuesCursor
+            prCursor = if (prEdges?.isNotEmpty() == true) prEdges.last()?.cursor else prCursor
             runQuery(issuesCursor, prCursor)
         }
     }
