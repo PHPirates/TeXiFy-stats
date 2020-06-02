@@ -43,11 +43,11 @@ class OpenIssuesByDatePlot(private val githubToken: String) {
 
         apolloClient.query(query).enqueue(object : ApolloCall.Callback<OpenIssuesQuery.Data?>() {
             override fun onResponse(dataResponse: Response<OpenIssuesQuery.Data?>) {
-                val data = dataResponse.data()
+                val data = dataResponse.data
 
                 if (data == null) {
                     println("No data received")
-                    println(dataResponse.errors())
+                    println(dataResponse.errors)
                 } else {
                     receiveData(data)
                 }

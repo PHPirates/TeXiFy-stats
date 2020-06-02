@@ -14,13 +14,13 @@ fun main(args: Array<String>) {
 
     apolloClient.query(query).enqueue(object : ApolloCall.Callback<ViewLoginQuery.Data?>() {
         override fun onResponse(dataResponse: Response<ViewLoginQuery.Data?>) {
-            val data = dataResponse.data()
+            val data = dataResponse.data
 
             if (data == null) {
                 println("No data received")
-                println(dataResponse.errors())
+                println(dataResponse.errors)
             } else {
-                println(dataResponse.data()?.viewer?.login)
+                println(dataResponse.data?.viewer?.login)
             }
             exitProcess(0)
         }

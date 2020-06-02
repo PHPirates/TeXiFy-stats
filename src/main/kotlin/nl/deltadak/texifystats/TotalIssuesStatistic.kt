@@ -25,7 +25,7 @@ data class OpenCloseEvent(val time: Instant, val action: Action)
  * @param useAllData Whether to use all data available for the plot. If false, only one query will be done (faster).
  * @param onlyOpenIssues Whether to show only open issues over time, or all issues (so total number of submitted issues).
  */
-class TotalIssuesStatistic(private val githubToken: String, private val useAllData: Boolean = true, private val onlyOpenIssues: Boolean = true) {
+class TotalIssuesStatistic(private val githubToken: String, private val useAllData: Boolean = true, private val onlyOpenIssues: Boolean = true, private val takeLastEvents: Int? = null) {
 
     private val issuesEventList = mutableListOf<OpenCloseEvent>()
     private val prEventList = mutableListOf<OpenCloseEvent>()
@@ -96,9 +96,10 @@ class TotalIssuesStatistic(private val githubToken: String, private val useAllDa
             totalIssuesList.add(counter)
         }
 
+        val n = takeLastEvents ?: eventList.size
         val plotData = mapOf<String, Any>(
-                "date" to eventList.map { it.time.toEpochMilli() },
-                "count" to totalIssuesList
+                "date" to eventList.map { it.time.toEpochMilli() }.takeLast(n),
+                "count" to totalIssuesList.takeLast(n)
         )
 
         val plot = ggplot(plotData) + geom_line { x = "date"; y = "count" } + scale_x_datetime() + ggtitle("Total open $type over time")
@@ -141,5 +142,5 @@ fun main(args: Array<String>) {
         throw IllegalArgumentException("You need to provide the GitHub token")
     }
 
-    TotalIssuesStatistic(args[0], useAllData = true, onlyOpenIssues = false).runQuery()
+    TotalIssuesStatistic(args[0], useAllData = true, onlyOpenIssues = true, takeLastEvents = 500).runQuery()
 }
