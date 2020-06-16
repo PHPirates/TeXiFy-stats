@@ -4,6 +4,8 @@ import com.apollographql.apollo.ApolloCall
 import com.apollographql.apollo.api.Input
 import com.apollographql.apollo.api.Response
 import com.apollographql.apollo.exception.ApolloException
+import jetbrains.letsPlot.Stat
+import jetbrains.letsPlot.geom.geom_histogram
 import jetbrains.letsPlot.geom.geom_line
 import jetbrains.letsPlot.ggplot
 import jetbrains.letsPlot.ggtitle
@@ -18,6 +20,8 @@ enum class Action { OPEN, CLOSE }
 
 /** An issue was opened or closed. */
 data class OpenCloseEvent(val time: Instant, val action: Action)
+
+typealias PlotFunction = (TotalIssuesStatistic, Pair<List<OpenCloseEvent>, List<OpenCloseEvent>>) -> Unit
 
 /**
  * Show total open issues over time, and total open pull requests over time.
@@ -34,11 +38,14 @@ class TotalIssuesStatistic(private val githubToken: String, private val useAllDa
     private var issuesCursor: String? = null
     private var prCursor: String? = null
 
+    /**
+     * @return Issue and PR event lists.
+     */
     // Unfortunately Edge and Edge1 are separate classes, so we can't abstract the foreach loop
     @Suppress("DuplicatedCode")
-    fun receiveData(data: TotalIssuesQuery.Data) {
+    fun receiveData(data: TotalIssuesQuery.Data, plotFunctions: List<PlotFunction>) {
 
-        val issueEdges = data.repository?.issues?.edges ?: return
+        val issueEdges = data.repository?.issues?.edges ?: throw IllegalStateException("No data found")
 
         // Read open and close dates for issues
         issueEdges.forEach {
@@ -64,8 +71,9 @@ class TotalIssuesStatistic(private val githubToken: String, private val useAllDa
 
         // If we have paginated to the end for both issues and pull requests
         if ((issueEdges.isNullOrEmpty() && prEdges.isNullOrEmpty()) || !useAllData) {
-            createPlot(issuesEventList, "issues")
-            createPlot(prEventList, "pull requests")
+            plotFunctions.forEach {
+                it(this@TotalIssuesStatistic, Pair(issuesEventList, prEventList))
+            }
         }
         else {
             println("Rate limit remaining: ${data.rateLimit?.remaining}")
@@ -73,15 +81,24 @@ class TotalIssuesStatistic(private val githubToken: String, private val useAllDa
             // Next page
             issuesCursor = if (issueEdges.isNotEmpty()) issueEdges.last()?.cursor else issuesCursor
             prCursor = if (prEdges?.isNotEmpty() == true) prEdges.last()?.cursor else prCursor
-            runQuery(issuesCursor, prCursor)
+            runQuery(issuesCursor, prCursor, plotFunctions)
         }
+    }
+
+    /**
+     * How many issues were opened per week.
+     */
+    fun showTotalIssuesPlots(lists: Pair<List<OpenCloseEvent>, List<OpenCloseEvent>>) {
+        showTotalIssuesPlot(lists.first, "issues")
+        showTotalIssuesPlot(lists.second, "pull requests")
     }
 
     /**
      * @param type Used for the title.
      */
-    private fun createPlot(eventList: MutableList<OpenCloseEvent>, type: String = "issues") {
+    private fun showTotalIssuesPlot(list: List<OpenCloseEvent>, type: String = "issues") {
         // Sort the events in order to walk through them and update the total issues counter for each event
+        val eventList = list.toMutableList()
         eventList.sortBy { it.time }
 
         // List of number of open issues, at index i is the count right after the i'th event in eventList
@@ -108,11 +125,30 @@ class TotalIssuesStatistic(private val githubToken: String, private val useAllDa
     }
 
     /**
+     * How many issues were opened per week.
+     */
+    fun showOpenedIssuesPerWeekPlots(lists: Pair<List<OpenCloseEvent>, List<OpenCloseEvent>>) {
+        showOpenedIssuesPerWeekPlot(lists.first, "issues")
+        showOpenedIssuesPerWeekPlot(lists.second, "pull requests")
+    }
+
+    private fun showOpenedIssuesPerWeekPlot(eventList: List<OpenCloseEvent>, type: String) {
+        val n = takeLastEvents ?: eventList.size
+        val openedIssues = mapOf<String, Any>(
+                "date" to eventList.filter { it.action == Action.OPEN }.map { it.time.toEpochMilli() }.takeLast(n)
+        )
+
+        val plot = ggplot(openedIssues) + geom_histogram(stat = Stat.bin(binWidth = 604800000.0)) { x = "date" } + scale_x_datetime() + ggtitle("New $type per week")
+
+        showPlot(plot, PlotSize.LARGE)
+    }
+
+    /**
      * Run the GraphQL query, given an issues and a pull request cursor.
      *
      * When the query is received, if needed in the response handling a new query will be sent for the next page.
      */
-    fun runQuery(issuesCursor: String? = null, pullRequestCursor: String? = null) {
+    fun runQuery(issuesCursor: String? = null, pullRequestCursor: String? = null, plotFunctions: List<PlotFunction>) {
         val apolloClient = getApolloClient(githubToken)
 
         val query = TotalIssuesQuery("TeXiFy-IDEA", "Hannah-Sten", Input.fromNullable(issuesCursor), Input.fromNullable(pullRequestCursor), 100)
@@ -125,7 +161,7 @@ class TotalIssuesStatistic(private val githubToken: String, private val useAllDa
                     println("No data received")
                     println(dataResponse.errors)
                 } else {
-                    receiveData(data)
+                    receiveData(data, plotFunctions)
                 }
             }
 
@@ -142,5 +178,9 @@ fun main(args: Array<String>) {
         throw IllegalArgumentException("You need to provide the GitHub token")
     }
 
-    TotalIssuesStatistic(args[0], useAllData = true, onlyOpenIssues = true, takeLastEvents = 500).runQuery()
+    val plotFunctions = listOf(
+//            TotalIssuesStatistic::showTotalIssuesPlots,
+            TotalIssuesStatistic::showOpenedIssuesPerWeekPlots
+    )
+    TotalIssuesStatistic(args[0], useAllData = true, onlyOpenIssues = true, takeLastEvents = 500).runQuery(plotFunctions = plotFunctions)
 }
