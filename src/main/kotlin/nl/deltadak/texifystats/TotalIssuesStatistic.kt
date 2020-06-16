@@ -19,18 +19,19 @@ import java.time.Instant
 enum class Action { OPEN, CLOSE }
 
 /** An issue was opened or closed. */
-data class OpenCloseEvent(val time: Instant, val action: Action)
+data class OpenCloseEvent(val time: Instant, val action: Action, val labels: List<String> = listOf())
 
 typealias PlotFunction = (TotalIssuesStatistic, Pair<List<OpenCloseEvent>, List<OpenCloseEvent>>) -> Unit
 
 /**
  * Show total open issues over time, and total open pull requests over time.
  *
- * @param useAllData Whether to use all data available for the plot. If false, only one query will be done (faster).
+ * @param debug Whether to use all data available for the plot. If false, only one query will be done (faster), and plots will be shown small.
  * @param onlyOpenIssues Whether to show only open issues over time, or all issues (so total number of submitted issues).
  */
-class TotalIssuesStatistic(private val githubToken: String, private val useAllData: Boolean = true, private val onlyOpenIssues: Boolean = true, private val takeLastEvents: Int? = null) {
+class TotalIssuesStatistic(private val githubToken: String, private val debug: Boolean = true, private val onlyOpenIssues: Boolean = true, private val takeLastEvents: Int? = null) {
 
+    // These are instance variables because data is received in batches and collected here
     private val issuesEventList = mutableListOf<OpenCloseEvent>()
     private val prEventList = mutableListOf<OpenCloseEvent>()
 
@@ -51,11 +52,12 @@ class TotalIssuesStatistic(private val githubToken: String, private val useAllDa
         issueEdges.forEach {
             val node = it?.node ?: return@forEach
             val createdAt = Instant.parse(node.createdAt.toString())
-            issuesEventList.add(OpenCloseEvent(createdAt, Action.OPEN))
+            val labels = node.labels?.edges?.mapNotNull { label -> label?.node?.name } ?: emptyList()
+            issuesEventList.add(OpenCloseEvent(createdAt, Action.OPEN, labels))
             // Issues that are not closed are still open
             if (node.closedAt != null && onlyOpenIssues) {
                 val closedAt = Instant.parse(node.closedAt.toString())
-                issuesEventList.add(OpenCloseEvent(closedAt, Action.CLOSE))
+                issuesEventList.add(OpenCloseEvent(closedAt, Action.CLOSE, labels))
             }
         }
 
@@ -70,7 +72,7 @@ class TotalIssuesStatistic(private val githubToken: String, private val useAllDa
         }
 
         // If we have paginated to the end for both issues and pull requests
-        if ((issueEdges.isNullOrEmpty() && prEdges.isNullOrEmpty()) || !useAllData) {
+        if ((issueEdges.isNullOrEmpty() && prEdges.isNullOrEmpty()) || debug) {
             plotFunctions.forEach {
                 it(this@TotalIssuesStatistic, Pair(issuesEventList, prEventList))
             }
@@ -83,6 +85,35 @@ class TotalIssuesStatistic(private val githubToken: String, private val useAllDa
             prCursor = if (prEdges?.isNotEmpty() == true) prEdges.last()?.cursor else prCursor
             runQuery(issuesCursor, prCursor, plotFunctions)
         }
+    }
+
+    /**
+     * Run the GraphQL query, given an issues and a pull request cursor.
+     *
+     * When the query is received, if needed in the response handling a new query will be sent for the next page.
+     */
+    fun runQuery(issuesCursor: String? = null, pullRequestCursor: String? = null, plotFunctions: List<PlotFunction>) {
+        val apolloClient = getApolloClient(githubToken)
+
+        val query = TotalIssuesQuery("TeXiFy-IDEA", "Hannah-Sten", Input.fromNullable(issuesCursor), Input.fromNullable(pullRequestCursor), 100)
+
+        apolloClient.query(query).enqueue(object : ApolloCall.Callback<TotalIssuesQuery.Data?>() {
+            override fun onResponse(dataResponse: Response<TotalIssuesQuery.Data?>) {
+                val data = dataResponse.data
+
+                if (data == null) {
+                    println("No data received")
+                    println(dataResponse.errors)
+                }
+                else {
+                    receiveData(data, plotFunctions)
+                }
+            }
+
+            override fun onFailure(e: ApolloException) {
+                println(e.message)
+            }
+        })
     }
 
     /**
@@ -107,7 +138,8 @@ class TotalIssuesStatistic(private val githubToken: String, private val useAllDa
         for (event in eventList) {
             if (event.action == Action.OPEN) {
                 counter++
-            } else {
+            }
+            else {
                 counter--
             }
             totalIssuesList.add(counter)
@@ -121,7 +153,12 @@ class TotalIssuesStatistic(private val githubToken: String, private val useAllDa
 
         val plot = ggplot(plotData) + geom_line { x = "date"; y = "count" } + scale_x_datetime() + ggtitle("Total open $type over time")
 
-        showPlot(plot, PlotSize.LARGE)
+        if (debug) {
+            showPlot(plot, PlotSize.SMALL)
+        }
+        else {
+            showPlot(plot, PlotSize.LARGE)
+        }
     }
 
     /**
@@ -134,41 +171,25 @@ class TotalIssuesStatistic(private val githubToken: String, private val useAllDa
 
     private fun showOpenedIssuesPerWeekPlot(eventList: List<OpenCloseEvent>, type: String) {
         val n = takeLastEvents ?: eventList.size
-        val openedIssues = mapOf<String, Any>(
+        val notDuplicates = mapOf<String, Any>(
+                "date" to eventList.filter { it.action == Action.OPEN && !it.labels.contains("duplicate") }.map { it.time.toEpochMilli() }.takeLast(n)
+        )
+
+        val allIssues = mapOf<String, Any>(
                 "date" to eventList.filter { it.action == Action.OPEN }.map { it.time.toEpochMilli() }.takeLast(n)
         )
 
-        val plot = ggplot(openedIssues) + geom_histogram(stat = Stat.bin(binWidth = 604800000.0)) { x = "date" } + scale_x_datetime() + ggtitle("New $type per week")
+        val plot = ggplot(allIssues) +
+                geom_histogram(data = allIssues, stat = Stat.bin(binWidth = 604800000.0), fill = "red") { x = "date" } +
+                geom_histogram(data = notDuplicates, stat = Stat.bin(binWidth = 604800000.0), fill = "blue") { x = "date" } +
+                scale_x_datetime() + ggtitle("New $type per week: red are all issues, blue are issues that are not a duplicate")
 
-        showPlot(plot, PlotSize.LARGE)
-    }
-
-    /**
-     * Run the GraphQL query, given an issues and a pull request cursor.
-     *
-     * When the query is received, if needed in the response handling a new query will be sent for the next page.
-     */
-    fun runQuery(issuesCursor: String? = null, pullRequestCursor: String? = null, plotFunctions: List<PlotFunction>) {
-        val apolloClient = getApolloClient(githubToken)
-
-        val query = TotalIssuesQuery("TeXiFy-IDEA", "Hannah-Sten", Input.fromNullable(issuesCursor), Input.fromNullable(pullRequestCursor), 100)
-
-        apolloClient.query(query).enqueue(object : ApolloCall.Callback<TotalIssuesQuery.Data?>() {
-            override fun onResponse(dataResponse: Response<TotalIssuesQuery.Data?>) {
-                val data = dataResponse.data
-
-                if (data == null) {
-                    println("No data received")
-                    println(dataResponse.errors)
-                } else {
-                    receiveData(data, plotFunctions)
-                }
-            }
-
-            override fun onFailure(e: ApolloException) {
-                println(e.message)
-            }
-        })
+        if (debug) {
+            showPlot(plot, PlotSize.SMALL)
+        }
+        else {
+            showPlot(plot, PlotSize.LARGE)
+        }
     }
 }
 
@@ -179,8 +200,8 @@ fun main(args: Array<String>) {
     }
 
     val plotFunctions = listOf(
-//            TotalIssuesStatistic::showTotalIssuesPlots,
+            TotalIssuesStatistic::showTotalIssuesPlots,
             TotalIssuesStatistic::showOpenedIssuesPerWeekPlots
     )
-    TotalIssuesStatistic(args[0], useAllData = true, onlyOpenIssues = true, takeLastEvents = 500).runQuery(plotFunctions = plotFunctions)
+    TotalIssuesStatistic(args[0], debug = false, onlyOpenIssues = true, takeLastEvents = null).runQuery(plotFunctions = plotFunctions)
 }

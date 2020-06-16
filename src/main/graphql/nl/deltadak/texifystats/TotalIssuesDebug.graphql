@@ -1,8 +1,8 @@
-# Query to find the total number of open issues over time
-query TotalIssues($repository: String!, $owner: String!, $issuesCursor: String, $pullRequestsCursor: String, $issues: Int!) {
-    repository(name: $repository, owner: $owner) {
+# Helpful for debugging the TotalIssues query
+query TotalIssuesDebug {
+    repository(name: "TeXiFy-IDEA", owner: "Hannah-Sten") {
         # 100 is the maximum to request in one query
-        issues(first: $issues, after: $issuesCursor) {
+        issues(first: 10) {
             edges {
                 node {
                     createdAt
@@ -18,7 +18,7 @@ query TotalIssues($repository: String!, $owner: String!, $issuesCursor: String, 
                 cursor
             }
         }
-        pullRequests(first: $issues, after: $pullRequestsCursor) {
+        pullRequests(first: 10) {
             edges {
                 node {
                     createdAt
