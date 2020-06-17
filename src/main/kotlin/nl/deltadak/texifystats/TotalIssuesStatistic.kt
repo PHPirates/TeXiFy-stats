@@ -162,33 +162,35 @@ class TotalIssuesStatistic(private val githubToken: String, private val debug: B
     }
 
     /**
-     * How many issues were opened per week.
+     * How many issues were opened per time window.
      */
     fun showOpenedIssuesPerWeekPlots(lists: Pair<List<OpenCloseEvent>, List<OpenCloseEvent>>) {
         showOpenedIssuesPerWeekPlot(lists.first, "issues")
-        showOpenedIssuesPerWeekPlot(lists.second, "pull requests")
     }
 
     private fun showOpenedIssuesPerWeekPlot(eventList: List<OpenCloseEvent>, type: String) {
         val n = takeLastEvents ?: eventList.size
-        val notDuplicates = mapOf<String, Any>(
-                "date" to eventList.filter { it.action == Action.OPEN && !it.labels.contains("duplicate") }.map { it.time.toEpochMilli() }.takeLast(n)
+        val duplicates = mapOf<String, Any>(
+                // Take last n before filtering, to ensure a fair view
+                "date" to eventList.takeLast(n).filter { it.action == Action.OPEN && it.labels.contains("duplicate") }.map { it.time.toEpochMilli() }
         )
 
         val allIssues = mapOf<String, Any>(
-                "date" to eventList.filter { it.action == Action.OPEN }.map { it.time.toEpochMilli() }.takeLast(n)
+                "date" to eventList.takeLast(n).filter { it.action == Action.OPEN }.map { it.time.toEpochMilli() }
         )
 
+        // Note that when a bin width of a day is selected, takeLastEvents should be <= 500
+        val binWidth = 1000.0 * 60 * 60 * 24 * 7 * 4
         val plot = ggplot(allIssues) +
-                geom_histogram(data = allIssues, stat = Stat.bin(binWidth = 604800000.0), fill = "red") { x = "date" } +
-                geom_histogram(data = notDuplicates, stat = Stat.bin(binWidth = 604800000.0), fill = "blue") { x = "date" } +
-                scale_x_datetime() + ggtitle("New $type per week: red are all issues, blue are issues that are not a duplicate")
+                geom_histogram(data = allIssues, stat = Stat.bin(binWidth = binWidth), fill = "blue") { x = "date" } +
+                geom_histogram(data = duplicates, stat = Stat.bin(binWidth = binWidth), fill = "red") { x = "date" } +
+                scale_x_datetime() + ggtitle("New $type per 4 weeks: blue are all issues, red are issues that are a duplicate")
 
         if (debug) {
             showPlot(plot, PlotSize.SMALL)
         }
         else {
-            showPlot(plot, PlotSize.LARGE)
+            showPlot(plot, PlotSize.SMALL)
         }
     }
 }
@@ -203,5 +205,5 @@ fun main(args: Array<String>) {
             TotalIssuesStatistic::showTotalIssuesPlots,
             TotalIssuesStatistic::showOpenedIssuesPerWeekPlots
     )
-    TotalIssuesStatistic(args[0], debug = false, onlyOpenIssues = true, takeLastEvents = null).runQuery(plotFunctions = plotFunctions)
+    TotalIssuesStatistic(args[0], debug = false, onlyOpenIssues = true, takeLastEvents = 1000).runQuery(plotFunctions = plotFunctions)
 }
