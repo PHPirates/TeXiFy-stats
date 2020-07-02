@@ -13,23 +13,23 @@ plugins {
     // Plugin which can update Gradle dependencies, use help/useLatestVersions
     id("se.patrikerdes.use-latest-versions") version "0.2.14"
 
-    id("org.openjfx.javafxplugin") version "0.0.8"
+    id("org.openjfx.javafxplugin") version "0.0.9"
 
-    id("com.apollographql.apollo") version "2.1.0"
+    id("com.apollographql.apollo") version "2.2.2"
 }
 
 dependencies {
     implementation(kotlin("stdlib"))
 
     // Apollo and dependencies
-    implementation("com.apollographql.apollo:apollo-runtime:2.1.0")
+    implementation("com.apollographql.apollo:apollo-runtime:2.2.2")
     implementation("com.squareup.okio:okio:2.4.3")
     implementation("org.jetbrains:annotations:19.0.0")
     testImplementation("org.jetbrains:annotations:19.0.0")
 
     // Lets-plot
-    implementation("org.openjfx:javafx-swing:15-ea+5")
-    implementation("org.openjfx:javafx:15-ea+5")
+    implementation("org.openjfx:javafx-swing:15-ea+6")
+    implementation("org.openjfx:javafx:15-ea+6")
     implementation("org.jetbrains.lets-plot:lets-plot-common:1.4.2")
     implementation("org.jetbrains.lets-plot:lets-plot-jfx:1.4.2")
     implementation("org.jetbrains.lets-plot:lets-plot-kotlin-api:0.0.9-SNAPSHOT")
