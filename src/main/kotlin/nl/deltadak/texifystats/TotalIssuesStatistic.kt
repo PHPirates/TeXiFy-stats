@@ -8,7 +8,7 @@ import jetbrains.letsPlot.Stat
 import jetbrains.letsPlot.geom.geom_histogram
 import jetbrains.letsPlot.geom.geom_line
 import jetbrains.letsPlot.ggplot
-import jetbrains.letsPlot.ggtitle
+import jetbrains.letsPlot.label.ggtitle
 import jetbrains.letsPlot.scale.scale_x_datetime
 import nl.deltadak.texifystats.api.getApolloClient
 import nl.deltadak.texifystats.plots.PlotSize

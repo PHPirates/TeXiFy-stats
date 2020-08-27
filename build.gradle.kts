@@ -8,31 +8,31 @@ plugins {
     idea
 
     // Plugin which checks for dependency updates with help/dependencyUpdates task.
-    id("com.github.ben-manes.versions") version "0.28.0"
+    id("com.github.ben-manes.versions") version "0.29.0"
 
     // Plugin which can update Gradle dependencies, use help/useLatestVersions
     id("se.patrikerdes.use-latest-versions") version "0.2.14"
 
     id("org.openjfx.javafxplugin") version "0.0.9"
 
-    id("com.apollographql.apollo") version "2.2.2"
+    id("com.apollographql.apollo") version "2.3.1"
 }
 
 dependencies {
     implementation(kotlin("stdlib"))
 
     // Apollo and dependencies
-    implementation("com.apollographql.apollo:apollo-runtime:2.2.2")
+    implementation("com.apollographql.apollo:apollo-runtime:2.3.1")
     implementation("com.squareup.okio:okio:2.4.3")
-    implementation("org.jetbrains:annotations:19.0.0")
-    testImplementation("org.jetbrains:annotations:19.0.0")
+    implementation("org.jetbrains:annotations:20.0.0")
+    testImplementation("org.jetbrains:annotations:20.0.0")
 
     // Lets-plot
-    implementation("org.openjfx:javafx-swing:15-ea+6")
-    implementation("org.openjfx:javafx:15-ea+6")
-    implementation("org.jetbrains.lets-plot:lets-plot-common:1.4.2")
-    implementation("org.jetbrains.lets-plot:lets-plot-jfx:1.4.2")
-    implementation("org.jetbrains.lets-plot:lets-plot-kotlin-api:0.0.9-SNAPSHOT")
+    implementation("org.openjfx:javafx-swing:16-ea+1")
+    implementation("org.openjfx:javafx:16-ea+1")
+    implementation("org.jetbrains.lets-plot:lets-plot-common:1.5.2")
+    implementation("org.jetbrains.lets-plot:lets-plot-jfx:1.5.2")
+    implementation("org.jetbrains.lets-plot:lets-plot-kotlin-api:1.0.0-rc1")
 }
 
 repositories {

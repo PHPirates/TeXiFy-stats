@@ -5,7 +5,7 @@ import com.apollographql.apollo.api.Response
 import com.apollographql.apollo.exception.ApolloException
 import jetbrains.letsPlot.geom.geom_histogram
 import jetbrains.letsPlot.ggplot
-import jetbrains.letsPlot.ggtitle
+import jetbrains.letsPlot.label.ggtitle
 import jetbrains.letsPlot.scale.scale_x_datetime
 import nl.deltadak.texifystats.api.getApolloClient
 import nl.deltadak.texifystats.plots.PlotSize
