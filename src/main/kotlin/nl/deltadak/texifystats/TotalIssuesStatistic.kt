@@ -31,6 +31,9 @@ typealias PlotFunction = (TotalIssuesStatistic, Pair<List<OpenCloseEvent>, List<
  */
 class TotalIssuesStatistic(private val githubToken: String, private val debug: Boolean = true, private val onlyOpenIssues: Boolean = true, private val takeLastEvents: Int? = null) {
 
+    val repository = "TeXiFy-IDEA"
+    val owner = "Hannah-Sten"
+
     // These are instance variables because data is received in batches and collected here
     private val issuesEventList = mutableListOf<OpenCloseEvent>()
     private val prEventList = mutableListOf<OpenCloseEvent>()
@@ -95,7 +98,7 @@ class TotalIssuesStatistic(private val githubToken: String, private val debug: B
     fun runQuery(issuesCursor: String? = null, pullRequestCursor: String? = null, plotFunctions: List<PlotFunction>) {
         val apolloClient = getApolloClient(githubToken)
 
-        val query = TotalIssuesQuery("TeXiFy-IDEA", "Hannah-Sten", Input.fromNullable(issuesCursor), Input.fromNullable(pullRequestCursor), 100)
+        val query = TotalIssuesQuery(repository, owner, Input.fromNullable(issuesCursor), Input.fromNullable(pullRequestCursor), 100)
 
         apolloClient.query(query).enqueue(object : ApolloCall.Callback<TotalIssuesQuery.Data?>() {
             override fun onResponse(dataResponse: Response<TotalIssuesQuery.Data?>) {
