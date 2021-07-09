@@ -3,10 +3,10 @@ package nl.deltadak.texifystats
 import com.apollographql.apollo.ApolloCall
 import com.apollographql.apollo.api.Response
 import com.apollographql.apollo.exception.ApolloException
-import jetbrains.letsPlot.geom.geom_histogram
+import jetbrains.letsPlot.geom.geomHistogram
 import jetbrains.letsPlot.ggplot
 import jetbrains.letsPlot.label.ggtitle
-import jetbrains.letsPlot.scale.scale_x_datetime
+import jetbrains.letsPlot.scale.scaleXDateTime
 import nl.deltadak.texifystats.api.getApolloClient
 import nl.deltadak.texifystats.plots.PlotSize
 import nl.deltadak.texifystats.plots.showPlot
@@ -28,12 +28,12 @@ class OpenIssuesByDatePlot(private val githubToken: String) {
                 "x" to creationDatesList
         )
 
-        val geom = geom_histogram(alpha = 0.3) {
+        val geom = geomHistogram(alpha = 0.3) {
             x = "x"
         }
-        val p = ggplot(data) + geom + scale_x_datetime() + ggtitle("Creation dates of open issues")
+        val p = ggplot(data) + geom + scaleXDateTime() + ggtitle("Creation dates of open issues")
 
-        showPlot(p, PlotSize.LARGE)
+        showPlot(mapOf("Open issues by date" to p), PlotSize.LARGE)
     }
 
     fun runQuery() {

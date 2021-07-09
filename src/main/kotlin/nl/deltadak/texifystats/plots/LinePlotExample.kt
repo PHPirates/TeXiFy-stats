@@ -4,9 +4,9 @@ import jetbrains.datalore.base.datetime.Date
 import jetbrains.datalore.base.datetime.DateTime
 import jetbrains.datalore.base.datetime.Month
 import jetbrains.datalore.base.datetime.tz.TimeZone
-import jetbrains.letsPlot.geom.geom_line
+import jetbrains.letsPlot.geom.geomLine
 import jetbrains.letsPlot.ggplot
-import jetbrains.letsPlot.scale.scale_x_datetime
+import jetbrains.letsPlot.scale.scaleXDateTime
 import kotlin.random.Random
 
 fun main() {
@@ -22,13 +22,13 @@ fun main() {
     val rnd = Random(0)
 
     val daysData = mapOf<String, Any>(
-            "days" to (0..nDays).map { instant.timeSinceEpoch + it * day },
-            "val" to (0..nDays).map { rnd.nextDouble(0.0, 20.0) }
+        "days" to (0..nDays).map { instant.timeSinceEpoch + it * day },
+        "val" to (0..nDays).map { rnd.nextDouble(0.0, 20.0) }
     )
 
     val plot = ggplot(daysData) +
-            geom_line { x = "days"; y = "val" } +
-            scale_x_datetime()
+            geomLine { x = "days"; y = "val" } +
+            scaleXDateTime()
 
-    showPlot(plot)
+    showPlot(mapOf("Line plot" to plot))
 }

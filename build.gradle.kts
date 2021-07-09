@@ -1,6 +1,6 @@
 plugins {
 
-    val kotlinVersion = "1.3.72"
+    val kotlinVersion = "1.5.20"
 
     application
     kotlin("jvm") version kotlinVersion
@@ -18,6 +18,12 @@ plugins {
     id("com.apollographql.apollo") version "2.5.2"
 }
 
+repositories {
+    mavenCentral()
+    mavenLocal()
+    maven("https://jetbrains.bintray.com/lets-plot-maven")
+}
+
 dependencies {
     implementation(kotlin("stdlib"))
 
@@ -30,16 +36,9 @@ dependencies {
     // Lets-plot
     implementation("org.openjfx:javafx-swing:16-ea+6")
     implementation("org.openjfx:javafx:16-ea+6")
-    implementation("org.jetbrains.lets-plot:lets-plot-common:1.5.6")
-    implementation("org.jetbrains.lets-plot:lets-plot-jfx:1.5.6")
-    implementation("org.jetbrains.lets-plot:lets-plot-kotlin-api:1.0.0-rc1")
-}
-
-repositories {
-    mavenCentral()
-    mavenLocal()
-    jcenter()
-    maven("https://jetbrains.bintray.com/lets-plot-maven")
+    implementation("org.jetbrains.lets-plot:lets-plot-common:2.0.4")
+    implementation("org.jetbrains.lets-plot:lets-plot-jfx:2.0.4")
+    implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:3.0.1")
 }
 
 apollo {
@@ -55,7 +54,7 @@ javafx {
 
 // Required by the GitHub Action
 application {
-    mainClassName = "nl.deltadak.texifystats.LetsPlotExample"
+    mainClass.set("nl.deltadak.texifystats.LetsPlotExample")
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {

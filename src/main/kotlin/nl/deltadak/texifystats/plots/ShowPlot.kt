@@ -2,62 +2,152 @@ package nl.deltadak.texifystats.plots
 
 import javafx.application.Platform
 import jetbrains.datalore.base.geometry.DoubleVector
-import jetbrains.datalore.plot.MonolithicAwt
-import jetbrains.datalore.plot.builder.presentation.Style
-import jetbrains.datalore.vis.svg.SvgSvgElement
-import jetbrains.datalore.vis.swing.SceneMapperJfxPanel
+import jetbrains.datalore.base.registration.Disposable
+import jetbrains.datalore.plot.MonolithicCommon
+import jetbrains.datalore.vis.swing.jfx.DefaultPlotPanelJfx
 import jetbrains.letsPlot.intern.Plot
 import jetbrains.letsPlot.intern.toSpec
 import java.awt.Dimension
+import java.awt.GridLayout
 import java.awt.Toolkit
-import javax.swing.JFrame
-import javax.swing.SwingUtilities
-import javax.swing.WindowConstants
-
-
-// Setup
-val COMPONENT_FACTORY_JFX = { svg: SvgSvgElement -> SceneMapperJfxPanel(svg, listOf(Style.JFX_PLOT_STYLESHEET)) }
-
-val EXECUTOR_JFX = { r: () -> Unit ->
-    if (Platform.isFxApplicationThread()) {
-        r.invoke()
-    } else {
-        Platform.runLater(r)
-    }
-}
+import javax.swing.*
+import javax.swing.JFrame.EXIT_ON_CLOSE
 
 enum class PlotSize { SMALL, LARGE }
 
 /**
- * Adapted from https://github.com/JetBrains/lets-plot-kotlin/blob/b165c405be284fca5b8dece378a50879601bf12b/demo/jvm-javafx/src/main/kotlin/minimalDemo/Main.kt
+ * Adapted from https://github.com/JetBrains/lets-plot-kotlin/blob/2cc96fd3ce258a61edbb5e741a8fc9ab4ad863d1/demo/jvm-javafx/src/main/kotlin/minimalDemo/Main.kt
  */
-fun showPlot(plot: Plot, windowSize: PlotSize = PlotSize.LARGE) {
-    SwingUtilities.invokeLater {
+fun showPlot(plots: Map<String, Plot>, windowSize: PlotSize = PlotSize.LARGE) {
+    val selectedPlotKey = plots.keys.first()
+    val controller = Controller(
+        plots,
+        selectedPlotKey,
+        false
+    )
 
-        // Create JFXPanel showing the plot.
-        val plotSpec = plot.toSpec()
-        val screenSize: Dimension = Toolkit.getDefaultToolkit().screenSize
-        val width = screenSize.getWidth()
-        val height = screenSize.getHeight()
-        val plotSize = if (windowSize == PlotSize.SMALL) {
-            DoubleVector(600.0, 300.0)
-        } else {
-            DoubleVector(width - 70, height - 70)
-        }
+    val window = JFrame("Example App")
+    window.defaultCloseOperation = EXIT_ON_CLOSE
+    window.contentPane.layout = BoxLayout(window.contentPane, BoxLayout.Y_AXIS)
 
-        val component =
-                MonolithicAwt.buildPlotFromRawSpecs(plotSpec, plotSize, COMPONENT_FACTORY_JFX, EXECUTOR_JFX) {
-                    for (message in it) {
-                        println("PLOT MESSAGE: $message")
+    // Add controls
+    val controlsPanel = Box.createHorizontalBox().apply {
+        // Plot selector
+        val plotButtonGroup = ButtonGroup()
+        for (key in plots.keys) {
+            plotButtonGroup.add(
+                JRadioButton(key, key == selectedPlotKey).apply {
+                    addActionListener {
+                        controller.plotKey = this.text
                     }
                 }
+            )
+        }
 
-        // Show plot in Swing frame.
-        val frame = JFrame("Let's plot")
-        frame.contentPane.add(component)
-        frame.defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
-        frame.size = Dimension(plotSize.x.toInt() + 100, plotSize.y.toInt() + 100)
-        frame.isVisible = true
+        this.add(Box.createHorizontalBox().apply {
+            border = BorderFactory.createTitledBorder("Plot")
+            for (elem in plotButtonGroup.elements) {
+                add(elem)
+            }
+        })
 
+        // Preserve aspect ratio selector
+        val aspectRadioButtonGroup = ButtonGroup()
+        aspectRadioButtonGroup.add(JRadioButton("Original", false).apply {
+            addActionListener {
+                controller.preserveAspectRadio = true
+            }
+        })
+        aspectRadioButtonGroup.add(JRadioButton("Fit container", true).apply {
+            addActionListener {
+                controller.preserveAspectRadio = false
+            }
+        })
+
+        this.add(Box.createHorizontalBox().apply {
+            border = BorderFactory.createTitledBorder("Aspect ratio")
+            for (elem in aspectRadioButtonGroup.elements) {
+                add(elem)
+            }
+        })
+    }
+    window.contentPane.add(controlsPanel)
+
+    // Add plot panel
+    val plotContainerPanel = JPanel(GridLayout())
+    window.contentPane.add(plotContainerPanel)
+
+    controller.plotContainerPanel = plotContainerPanel
+    controller.rebuildPlotComponent()
+
+    val screenSize: Dimension = Toolkit.getDefaultToolkit().screenSize
+    val width = screenSize.getWidth()
+    val height = screenSize.getHeight()
+
+    val plotSize = if (windowSize == PlotSize.SMALL) {
+        Dimension(600, 300)
+    } else {
+        Dimension(width.toInt() - 70, height.toInt() - 70)
+    }
+
+    SwingUtilities.invokeLater {
+        window.pack()
+        window.size = plotSize
+        window.setLocationRelativeTo(null)
+        window.isVisible = true
+    }
+}
+
+private class Controller(
+    private val plots: Map<String, Plot>,
+    initialPlotKey: String,
+    initialPreserveAspectRadio: Boolean
+) {
+    var plotContainerPanel: JPanel? = null
+    var plotKey: String = initialPlotKey
+        set(value) {
+            field = value
+            rebuildPlotComponent()
+        }
+    var preserveAspectRadio: Boolean = initialPreserveAspectRadio
+        set(value) {
+            field = value
+            rebuildPlotComponent()
+        }
+
+    fun rebuildPlotComponent() {
+        plotContainerPanel?.let {
+            val container = plotContainerPanel!!
+            // cleanup
+            for (component in container.components) {
+                if (component is Disposable) {
+                    component.dispose()
+                }
+            }
+            container.removeAll()
+
+            // build
+            container.add(createPlotPanel())
+            container.parent?.revalidate()
+        }
+    }
+
+    fun createPlotPanel(): JPanel {
+        // Make sure JavaFX event thread won't get killed after JFXPanel is destroyed.
+        Platform.setImplicitExit(false)
+
+        val rawSpec = plots[plotKey]!!.toSpec()
+        val processedSpec = MonolithicCommon.processRawSpecs(rawSpec, frontendOnly = false)
+
+        return DefaultPlotPanelJfx(
+            processedSpec = processedSpec,
+            preserveAspectRatio = preserveAspectRadio,
+            preferredSizeFromPlot = false,
+            repaintDelay = 10,
+        ) { messages ->
+            for (message in messages) {
+                println("[Example App] $message")
+            }
+        }
     }
 }

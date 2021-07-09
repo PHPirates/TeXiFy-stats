@@ -5,11 +5,12 @@ import com.apollographql.apollo.api.Input
 import com.apollographql.apollo.api.Response
 import com.apollographql.apollo.exception.ApolloException
 import jetbrains.letsPlot.Stat
-import jetbrains.letsPlot.geom.geom_histogram
-import jetbrains.letsPlot.geom.geom_line
+import jetbrains.letsPlot.geom.geomHistogram
+import jetbrains.letsPlot.geom.geomLine
 import jetbrains.letsPlot.ggplot
+import jetbrains.letsPlot.intern.Plot
 import jetbrains.letsPlot.label.ggtitle
-import jetbrains.letsPlot.scale.scale_x_datetime
+import jetbrains.letsPlot.scale.scaleXDateTime
 import nl.deltadak.texifystats.api.getApolloClient
 import nl.deltadak.texifystats.plots.PlotSize
 import nl.deltadak.texifystats.plots.showPlot
@@ -21,7 +22,7 @@ enum class Action { OPEN, CLOSE }
 /** An issue was opened or closed. */
 data class OpenCloseEvent(val time: Instant, val action: Action, val labels: List<String> = listOf())
 
-typealias PlotFunction = (TotalIssuesStatistic, Pair<List<OpenCloseEvent>, List<OpenCloseEvent>>) -> Unit
+typealias PlotFunction = (TotalIssuesStatistic, Pair<List<OpenCloseEvent>, List<OpenCloseEvent>>) -> Pair<String, Plot>
 
 /**
  * Show total open issues over time, and total open pull requests over time.
@@ -75,10 +76,12 @@ class TotalIssuesStatistic(private val githubToken: String, private val debug: B
         }
 
         // If we have paginated to the end for both issues and pull requests
-        if ((issueEdges.isNullOrEmpty() && prEdges.isNullOrEmpty()) || debug) {
-            plotFunctions.forEach {
+        if ((issueEdges.isEmpty() && prEdges.isNullOrEmpty()) || debug) {
+            val plots = plotFunctions.map {
                 it(this@TotalIssuesStatistic, Pair(issuesEventList, prEventList))
-            }
+            }.toTypedArray()
+            val titlesAndPlots = mapOf(*plots)
+            showPlot(titlesAndPlots, if (debug) PlotSize.SMALL else PlotSize.LARGE)
         }
         else {
             println("Rate limit remaining: ${data.rateLimit?.remaining}")
@@ -120,17 +123,9 @@ class TotalIssuesStatistic(private val githubToken: String, private val debug: B
     }
 
     /**
-     * How many issues were opened per week.
-     */
-    fun showTotalIssuesPlots(lists: Pair<List<OpenCloseEvent>, List<OpenCloseEvent>>) {
-        showTotalIssuesPlot(lists.first, "issues")
-        showTotalIssuesPlot(lists.second, "pull requests")
-    }
-
-    /**
      * @param type Used for the title.
      */
-    private fun showTotalIssuesPlot(list: List<OpenCloseEvent>, type: String = "issues") {
+    fun createTotalIssuesPlot(list: List<OpenCloseEvent>, type: String = "issues"): Pair<String, Plot> {
         // Sort the events in order to walk through them and update the total issues counter for each event
         val eventList = list.toMutableList()
         eventList.sortBy { it.time }
@@ -154,24 +149,12 @@ class TotalIssuesStatistic(private val githubToken: String, private val debug: B
                 "count" to totalIssuesList.takeLast(n)
         )
 
-        val plot = ggplot(plotData) + geom_line { x = "date"; y = "count" } + scale_x_datetime() + ggtitle("Total open $type over time")
+        val plot = ggplot(plotData) + geomLine { x = "date"; y = "count" } + scaleXDateTime() + ggtitle("Total open $type over time")
 
-        if (debug) {
-            showPlot(plot, PlotSize.SMALL)
-        }
-        else {
-            showPlot(plot, PlotSize.LARGE)
-        }
+        return Pair("How many $type are open over time", plot)
     }
 
-    /**
-     * How many issues were opened per time window.
-     */
-    fun showOpenedIssuesPerWeekPlots(lists: Pair<List<OpenCloseEvent>, List<OpenCloseEvent>>) {
-        showOpenedIssuesPerWeekPlot(lists.first, "issues")
-    }
-
-    private fun showOpenedIssuesPerWeekPlot(eventList: List<OpenCloseEvent>, type: String) {
+    fun showOpenedIssuesPerWeekPlot(eventList: List<OpenCloseEvent>, type: String): Pair<String, Plot> {
         val n = takeLastEvents ?: eventList.size
         val duplicates = mapOf<String, Any>(
                 // Take last n before filtering, to ensure a fair view
@@ -185,16 +168,11 @@ class TotalIssuesStatistic(private val githubToken: String, private val debug: B
         // Note that when a bin width of a day is selected, takeLastEvents should be <= 500
         val binWidth = 1000.0 * 60 * 60 * 24 * 7 * 4
         val plot = ggplot(allIssues) +
-                geom_histogram(data = allIssues, stat = Stat.bin(binWidth = binWidth), fill = "blue") { x = "date" } +
-                geom_histogram(data = duplicates, stat = Stat.bin(binWidth = binWidth), fill = "red") { x = "date" } +
-                scale_x_datetime() + ggtitle("New $type per 4 weeks: blue are all issues, red are issues that are a duplicate")
+                geomHistogram(data = allIssues, stat = Stat.bin(binWidth = binWidth), fill = "blue") { x = "date" } +
+                geomHistogram(data = duplicates, stat = Stat.bin(binWidth = binWidth), fill = "red") { x = "date" } +
+                scaleXDateTime() + ggtitle("New $type per 4 weeks: blue are all issues, red are issues that are a duplicate")
 
-        if (debug) {
-            showPlot(plot, PlotSize.SMALL)
-        }
-        else {
-            showPlot(plot, PlotSize.SMALL)
-        }
+        return Pair("How many issues were opened per time window.", plot)
     }
 }
 
@@ -204,9 +182,10 @@ fun main(args: Array<String>) {
         throw IllegalArgumentException("You need to provide the GitHub token")
     }
 
-    val plotFunctions = listOf(
-            TotalIssuesStatistic::showTotalIssuesPlots,
-            TotalIssuesStatistic::showOpenedIssuesPerWeekPlots
+    val plotFunctions: List<PlotFunction> = listOf(
+        { s, lists -> s.createTotalIssuesPlot(lists.first, "issues") },
+        { s, lists -> s.createTotalIssuesPlot(lists.first, "pull requests") },
+        { s, lists -> s.showOpenedIssuesPerWeekPlot(lists.first, "issues") },
     )
     TotalIssuesStatistic(args[0], debug = false, onlyOpenIssues = true, takeLastEvents = 1000).runQuery(plotFunctions = plotFunctions)
 }
