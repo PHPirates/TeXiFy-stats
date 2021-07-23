@@ -1,6 +1,9 @@
 package nl.deltadak.texifystats.api
 
-import com.apollographql.apollo.ApolloClient
+import com.apollographql.apollo3.ApolloClient
+import com.apollographql.apollo3.api.http.DefaultHttpRequestComposer
+import com.apollographql.apollo3.network.http.DefaultHttpEngine
+import com.apollographql.apollo3.network.http.HttpNetworkTransport
 import okhttp3.OkHttpClient
 
 fun getApolloClient(authHeader: String): ApolloClient {
@@ -15,8 +18,10 @@ fun getApolloClient(authHeader: String): ApolloClient {
             }
             .build()
 
-    return ApolloClient.builder()
-            .serverUrl(serverUrl)
-            .okHttpClient(okHttpClient)
-            .build()
+    return ApolloClient(
+        networkTransport = HttpNetworkTransport(
+            httpRequestComposer = DefaultHttpRequestComposer(serverUrl),
+            engine=DefaultHttpEngine(okHttpClient=okHttpClient)
+        )
+    )
 }

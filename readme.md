@@ -6,7 +6,7 @@
 This project uses
 * Kotlin
 * Gradle Kotlin DSL
-* Apollo-Android
+* Apollo-Android v3
 * Lets-plot via [lets-plot-kotlin](https://github.com/JetBrains/lets-plot-kotlin), [lets-plot documentation](https://htmlpreview.github.io/?https://github.com/JetBrains/lets-plot-kotlin/blob/master/plot-api/docs/plot-api/index.html)
 
 The JS GraphQL IntelliJ plugin is recommended.

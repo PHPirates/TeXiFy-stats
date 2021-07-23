@@ -15,7 +15,7 @@ plugins {
 
     id("org.openjfx.javafxplugin") version "0.0.9"
 
-    id("com.apollographql.apollo") version "2.5.2"
+    id("com.apollographql.apollo3") version "3.0.0-alpha02"
 }
 
 repositories {
@@ -28,7 +28,7 @@ dependencies {
     implementation(kotlin("stdlib"))
 
     // Apollo and dependencies
-    implementation("com.apollographql.apollo:apollo-runtime:2.5.2")
+    implementation("com.apollographql.apollo3:apollo-runtime:3.0.0-alpha02")
     implementation("com.squareup.okio:okio:2.4.3")
     implementation("org.jetbrains:annotations:20.1.0")
     testImplementation("org.jetbrains:annotations:20.1.0")
@@ -42,10 +42,9 @@ dependencies {
 }
 
 apollo {
-    generateKotlinModels.set(true)
-    graphqlSourceDirectorySet.srcDir("src/main/graphql")
-    graphqlSourceDirectorySet.include("**/*.graphql")
-    graphqlSourceDirectorySet.exclude("**/schema.graphql")
+    srcDir("src/main/graphql")
+    include.add("**/*.graphql")
+    exclude.add("**/schema.graphql")
 }
 
 javafx {

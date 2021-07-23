@@ -1,9 +1,6 @@
 package nl.deltadak.texifystats
 
-import com.apollographql.apollo.ApolloCall
-import com.apollographql.apollo.api.Input
-import com.apollographql.apollo.api.Response
-import com.apollographql.apollo.exception.ApolloException
+import TotalIssuesQuery
 import jetbrains.letsPlot.Stat
 import jetbrains.letsPlot.geom.geomHistogram
 import jetbrains.letsPlot.geom.geomLine
@@ -15,6 +12,7 @@ import nl.deltadak.texifystats.api.getApolloClient
 import nl.deltadak.texifystats.plots.PlotSize
 import nl.deltadak.texifystats.plots.showPlot
 import java.time.Instant
+import kotlin.system.exitProcess
 
 /** Actions on an issue. */
 enum class Action { OPEN, CLOSE }
@@ -44,11 +42,11 @@ class TotalIssuesStatistic(private val githubToken: String, private val debug: B
     private var prCursor: String? = null
 
     /**
-     * @return Issue and PR event lists.
+     * Updates Issue and PR event lists.
      */
     // Unfortunately Edge and Edge1 are separate classes, so we can't abstract the foreach loop
     @Suppress("DuplicatedCode")
-    fun receiveData(data: TotalIssuesQuery.Data, plotFunctions: List<PlotFunction>) {
+    suspend fun receiveData(data: TotalIssuesQuery.Data, plotFunctions: List<PlotFunction>) {
 
         val issueEdges = data.repository?.issues?.edges ?: throw IllegalStateException("No data found")
 
@@ -98,28 +96,22 @@ class TotalIssuesStatistic(private val githubToken: String, private val debug: B
      *
      * When the query is received, if needed in the response handling a new query will be sent for the next page.
      */
-    fun runQuery(issuesCursor: String? = null, pullRequestCursor: String? = null, plotFunctions: List<PlotFunction>) {
+    suspend fun runQuery(issuesCursor: String? = null, pullRequestCursor: String? = null, plotFunctions: List<PlotFunction>) {
         val apolloClient = getApolloClient(githubToken)
 
-        val query = TotalIssuesQuery(repository, owner, Input.fromNullable(issuesCursor), Input.fromNullable(pullRequestCursor), 100)
+        val query = TotalIssuesQuery(repository, owner, issuesCursor, pullRequestCursor, 100)
 
-        apolloClient.query(query).enqueue(object : ApolloCall.Callback<TotalIssuesQuery.Data?>() {
-            override fun onResponse(dataResponse: Response<TotalIssuesQuery.Data?>) {
-                val data = dataResponse.data
+        val dataResponse = apolloClient.query(query)
+        val data = dataResponse.data
 
-                if (data == null) {
-                    println("No data received")
-                    println(dataResponse.errors)
-                }
-                else {
-                    receiveData(data, plotFunctions)
-                }
-            }
-
-            override fun onFailure(e: ApolloException) {
-                println(e.message)
-            }
-        })
+        if (data == null) {
+            println("No data received")
+            println(dataResponse.errors)
+            exitProcess(-1)
+        }
+        else {
+            receiveData(data, plotFunctions)
+        }
     }
 
     /**
@@ -177,14 +169,14 @@ class TotalIssuesStatistic(private val githubToken: String, private val debug: B
 }
 
 
-fun main(args: Array<String>) {
+suspend fun main(args: Array<String>) {
     if (args.isEmpty()) {
-        throw IllegalArgumentException("You need to provide the GitHub token")
+        throw IllegalArgumentException("You need to provide the GitHub token as an argument")
     }
 
     val plotFunctions: List<PlotFunction> = listOf(
         { s, lists -> s.createTotalIssuesPlot(lists.first, "issues") },
-        { s, lists -> s.createTotalIssuesPlot(lists.first, "pull requests") },
+        { s, lists -> s.createTotalIssuesPlot(lists.second, "pull requests") },
         { s, lists -> s.showOpenedIssuesPerWeekPlot(lists.first, "issues") },
     )
     TotalIssuesStatistic(args[0], debug = false, onlyOpenIssues = true, takeLastEvents = 1000).runQuery(plotFunctions = plotFunctions)
