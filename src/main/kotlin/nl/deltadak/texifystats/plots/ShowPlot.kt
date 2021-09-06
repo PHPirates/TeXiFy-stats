@@ -1,7 +1,6 @@
 package nl.deltadak.texifystats.plots
 
 import javafx.application.Platform
-import jetbrains.datalore.base.geometry.DoubleVector
 import jetbrains.datalore.base.registration.Disposable
 import jetbrains.datalore.plot.MonolithicCommon
 import jetbrains.datalore.vis.swing.jfx.DefaultPlotPanelJfx
@@ -44,32 +43,40 @@ fun showPlot(plots: Map<String, Plot>, windowSize: PlotSize = PlotSize.LARGE) {
             )
         }
 
-        this.add(Box.createHorizontalBox().apply {
-            border = BorderFactory.createTitledBorder("Plot")
-            for (elem in plotButtonGroup.elements) {
-                add(elem)
+        this.add(
+            Box.createHorizontalBox().apply {
+                border = BorderFactory.createTitledBorder("Plot")
+                for (elem in plotButtonGroup.elements) {
+                    add(elem)
+                }
             }
-        })
+        )
 
         // Preserve aspect ratio selector
         val aspectRadioButtonGroup = ButtonGroup()
-        aspectRadioButtonGroup.add(JRadioButton("Original", false).apply {
-            addActionListener {
-                controller.preserveAspectRadio = true
+        aspectRadioButtonGroup.add(
+            JRadioButton("Original", false).apply {
+                addActionListener {
+                    controller.preserveAspectRadio = true
+                }
             }
-        })
-        aspectRadioButtonGroup.add(JRadioButton("Fit container", true).apply {
-            addActionListener {
-                controller.preserveAspectRadio = false
+        )
+        aspectRadioButtonGroup.add(
+            JRadioButton("Fit container", true).apply {
+                addActionListener {
+                    controller.preserveAspectRadio = false
+                }
             }
-        })
+        )
 
-        this.add(Box.createHorizontalBox().apply {
-            border = BorderFactory.createTitledBorder("Aspect ratio")
-            for (elem in aspectRadioButtonGroup.elements) {
-                add(elem)
+        this.add(
+            Box.createHorizontalBox().apply {
+                border = BorderFactory.createTitledBorder("Aspect ratio")
+                for (elem in aspectRadioButtonGroup.elements) {
+                    add(elem)
+                }
             }
-        })
+        )
     }
     window.contentPane.add(controlsPanel)
 

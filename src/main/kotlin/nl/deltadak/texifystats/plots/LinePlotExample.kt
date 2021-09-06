@@ -27,8 +27,8 @@ fun main() {
     )
 
     val plot = ggplot(daysData) +
-            geomLine { x = "days"; y = "val" } +
-            scaleXDateTime()
+        geomLine { x = "days"; y = "val" } +
+        scaleXDateTime()
 
     showPlot(mapOf("Line plot" to plot))
 }

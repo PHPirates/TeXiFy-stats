@@ -16,6 +16,8 @@ plugins {
     id("org.openjfx.javafxplugin") version "0.0.9"
 
     id("com.apollographql.apollo3") version "3.0.0-alpha02"
+
+    id("org.jlleitschuh.gradle.ktlint") version "10.0.0"
 }
 
 repositories {

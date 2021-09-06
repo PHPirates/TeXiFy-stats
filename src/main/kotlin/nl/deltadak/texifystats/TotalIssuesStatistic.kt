@@ -80,8 +80,7 @@ class TotalIssuesStatistic(private val githubToken: String, private val debug: B
             }.toTypedArray()
             val titlesAndPlots = mapOf(*plots)
             showPlot(titlesAndPlots, if (debug) PlotSize.SMALL else PlotSize.LARGE)
-        }
-        else {
+        } else {
             println("Rate limit remaining: ${data.rateLimit?.remaining}")
 
             // Next page
@@ -108,8 +107,7 @@ class TotalIssuesStatistic(private val githubToken: String, private val debug: B
             println("No data received")
             println(dataResponse.errors)
             exitProcess(-1)
-        }
-        else {
+        } else {
             receiveData(data, plotFunctions)
         }
     }
@@ -128,8 +126,7 @@ class TotalIssuesStatistic(private val githubToken: String, private val debug: B
         for (event in eventList) {
             if (event.action == Action.OPEN) {
                 counter++
-            }
-            else {
+            } else {
                 counter--
             }
             totalIssuesList.add(counter)
@@ -137,8 +134,8 @@ class TotalIssuesStatistic(private val githubToken: String, private val debug: B
 
         val n = takeLastEvents ?: eventList.size
         val plotData = mapOf<String, Any>(
-                "date" to eventList.map { it.time.toEpochMilli() }.takeLast(n),
-                "count" to totalIssuesList.takeLast(n)
+            "date" to eventList.map { it.time.toEpochMilli() }.takeLast(n),
+            "count" to totalIssuesList.takeLast(n)
         )
 
         val plot = ggplot(plotData) + geomLine { x = "date"; y = "count" } + scaleXDateTime() + ggtitle("Total open $type over time")
@@ -149,25 +146,24 @@ class TotalIssuesStatistic(private val githubToken: String, private val debug: B
     fun showOpenedIssuesPerWeekPlot(eventList: List<OpenCloseEvent>, type: String): Pair<String, Plot> {
         val n = takeLastEvents ?: eventList.size
         val duplicates = mapOf<String, Any>(
-                // Take last n before filtering, to ensure a fair view
-                "date" to eventList.takeLast(n).filter { it.action == Action.OPEN && it.labels.contains("duplicate") }.map { it.time.toEpochMilli() }
+            // Take last n before filtering, to ensure a fair view
+            "date" to eventList.takeLast(n).filter { it.action == Action.OPEN && it.labels.contains("duplicate") }.map { it.time.toEpochMilli() }
         )
 
         val allIssues = mapOf<String, Any>(
-                "date" to eventList.takeLast(n).filter { it.action == Action.OPEN }.map { it.time.toEpochMilli() }
+            "date" to eventList.takeLast(n).filter { it.action == Action.OPEN }.map { it.time.toEpochMilli() }
         )
 
         // Note that when a bin width of a day is selected, takeLastEvents should be <= 500
         val binWidth = 1000.0 * 60 * 60 * 24 * 7 * 4
         val plot = ggplot(allIssues) +
-                geomHistogram(data = allIssues, stat = Stat.bin(binWidth = binWidth), fill = "blue") { x = "date" } +
-                geomHistogram(data = duplicates, stat = Stat.bin(binWidth = binWidth), fill = "red") { x = "date" } +
-                scaleXDateTime() + ggtitle("New $type per 4 weeks: blue are all issues, red are issues that are a duplicate")
+            geomHistogram(data = allIssues, stat = Stat.bin(binWidth = binWidth), fill = "blue") { x = "date" } +
+            geomHistogram(data = duplicates, stat = Stat.bin(binWidth = binWidth), fill = "red") { x = "date" } +
+            scaleXDateTime() + ggtitle("New $type per 4 weeks: blue are all issues, red are issues that are a duplicate")
 
         return Pair("How many issues were opened per time window.", plot)
     }
 }
-
 
 suspend fun main(args: Array<String>) {
     if (args.isEmpty()) {

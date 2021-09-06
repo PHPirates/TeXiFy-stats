@@ -23,7 +23,7 @@ class OpenIssuesByDatePlot(private val githubToken: String) {
         } ?: throw IllegalStateException("No creation dates present")
 
         val data = mapOf<String, Any>(
-                "x" to creationDatesList
+            "x" to creationDatesList
         )
 
         val geom = geomHistogram(alpha = 0.3) {
