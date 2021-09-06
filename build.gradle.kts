@@ -61,3 +61,10 @@ application {
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
 }
+
+ktlint {
+    filter {
+        exclude { it.file.absolutePath.contains("/build/") }
+    }
+    verbose.set(true)
+}
