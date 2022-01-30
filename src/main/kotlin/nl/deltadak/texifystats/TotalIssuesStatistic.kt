@@ -145,9 +145,9 @@ class TotalIssuesStatistic(private val githubToken: String, private val debug: B
 
     fun showOpenedIssuesPerWeekPlot(eventList: List<OpenCloseEvent>, type: String): Pair<String, Plot> {
         val n = takeLastEvents ?: eventList.size
-        val duplicates = mapOf<String, Any>(
+        val notDuplicates = mapOf<String, Any>(
             // Take last n before filtering, to ensure a fair view
-            "date" to eventList.takeLast(n).filter { it.action == Action.OPEN && it.labels.contains("duplicate") }.map { it.time.toEpochMilli() }
+            "date" to eventList.takeLast(n).filter { it.action == Action.OPEN && !it.labels.contains("duplicate") }.map { it.time.toEpochMilli() }
         )
 
         val allIssues = mapOf<String, Any>(
@@ -158,8 +158,8 @@ class TotalIssuesStatistic(private val githubToken: String, private val debug: B
         val binWidth = 1000.0 * 60 * 60 * 24 * 7 * 4
         val plot = ggplot(allIssues) +
             geomHistogram(data = allIssues, stat = Stat.bin(binWidth = binWidth), fill = "blue") { x = "date" } +
-            geomHistogram(data = duplicates, stat = Stat.bin(binWidth = binWidth), fill = "red") { x = "date" } +
-            scaleXDateTime() + ggtitle("New $type per 4 weeks: blue are all issues, red are issues that are a duplicate")
+            geomHistogram(data = notDuplicates, stat = Stat.bin(binWidth = binWidth), fill = "red") { x = "date" } +
+            scaleXDateTime() + ggtitle("New $type per 4 weeks: blue are all issues, red are issues that are not a duplicate")
 
         return Pair("How many issues were opened per time window.", plot)
     }
