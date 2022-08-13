@@ -1,16 +1,16 @@
 package nl.deltadak.texifystats
 
-import TotalIssuesQuery
-import jetbrains.letsPlot.Stat
-import jetbrains.letsPlot.geom.geomHistogram
-import jetbrains.letsPlot.geom.geomLine
-import jetbrains.letsPlot.ggplot
-import jetbrains.letsPlot.intern.Plot
-import jetbrains.letsPlot.label.ggtitle
-import jetbrains.letsPlot.scale.scaleXDateTime
+import com.apollographql.apollo3.api.Optional
 import nl.deltadak.texifystats.api.getApolloClient
 import nl.deltadak.texifystats.plots.PlotSize
 import nl.deltadak.texifystats.plots.showPlot
+import org.jetbrains.letsPlot.Stat
+import org.jetbrains.letsPlot.geom.geomHistogram
+import org.jetbrains.letsPlot.geom.geomLine
+import org.jetbrains.letsPlot.ggplot
+import org.jetbrains.letsPlot.intern.Plot
+import org.jetbrains.letsPlot.label.ggtitle
+import org.jetbrains.letsPlot.scale.scaleXDateTime
 import java.time.Instant
 import kotlin.system.exitProcess
 
@@ -46,7 +46,7 @@ class TotalIssuesStatistic(private val githubToken: String, private val debug: B
      */
     // Unfortunately Edge and Edge1 are separate classes, so we can't abstract the foreach loop
     @Suppress("DuplicatedCode")
-    suspend fun receiveData(data: TotalIssuesQuery.Data, plotFunctions: List<PlotFunction>) {
+    private suspend fun receiveData(data: TotalIssuesQuery.Data, plotFunctions: List<PlotFunction>) {
 
         val issueEdges = data.repository?.issues?.edges ?: throw IllegalStateException("No data found")
 
@@ -98,9 +98,9 @@ class TotalIssuesStatistic(private val githubToken: String, private val debug: B
     suspend fun runQuery(issuesCursor: String? = null, pullRequestCursor: String? = null, plotFunctions: List<PlotFunction>) {
         val apolloClient = getApolloClient(githubToken)
 
-        val query = TotalIssuesQuery(repository, owner, issuesCursor, pullRequestCursor, 100)
+        val query = TotalIssuesQuery(repository, owner, Optional.Present(issuesCursor), Optional.Present(pullRequestCursor), 100)
 
-        val dataResponse = apolloClient.query(query)
+        val dataResponse = apolloClient.query(query).execute()
         val data = dataResponse.data
 
         if (data == null) {

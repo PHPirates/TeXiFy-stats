@@ -4,8 +4,8 @@ import javafx.application.Platform
 import jetbrains.datalore.base.registration.Disposable
 import jetbrains.datalore.plot.MonolithicCommon
 import jetbrains.datalore.vis.swing.jfx.DefaultPlotPanelJfx
-import jetbrains.letsPlot.intern.Plot
-import jetbrains.letsPlot.intern.toSpec
+import org.jetbrains.letsPlot.intern.Plot
+import org.jetbrains.letsPlot.intern.toSpec
 import java.awt.Dimension
 import java.awt.GridLayout
 import java.awt.Toolkit

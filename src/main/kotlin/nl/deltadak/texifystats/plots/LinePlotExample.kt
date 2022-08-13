@@ -4,9 +4,9 @@ import jetbrains.datalore.base.datetime.Date
 import jetbrains.datalore.base.datetime.DateTime
 import jetbrains.datalore.base.datetime.Month
 import jetbrains.datalore.base.datetime.tz.TimeZone
-import jetbrains.letsPlot.geom.geomLine
-import jetbrains.letsPlot.ggplot
-import jetbrains.letsPlot.scale.scaleXDateTime
+import org.jetbrains.letsPlot.geom.geomLine
+import org.jetbrains.letsPlot.ggplot
+import org.jetbrains.letsPlot.scale.scaleXDateTime
 import kotlin.random.Random
 
 fun main() {

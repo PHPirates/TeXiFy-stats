@@ -8,16 +8,16 @@ plugins {
     idea
 
     // Plugin which checks for dependency updates with help/dependencyUpdates task.
-    id("com.github.ben-manes.versions") version "0.36.0"
+    id("com.github.ben-manes.versions") version "0.42.0"
 
     // Plugin which can update Gradle dependencies, use help/useLatestVersions
-    id("se.patrikerdes.use-latest-versions") version "0.2.15"
+    id("se.patrikerdes.use-latest-versions") version "0.2.18"
 
-    id("org.openjfx.javafxplugin") version "0.0.9"
+    id("org.openjfx.javafxplugin") version "0.0.13"
 
-    id("com.apollographql.apollo3") version "3.0.0-alpha02"
+    id("com.apollographql.apollo3") version "3.5.0"
 
-    id("org.jlleitschuh.gradle.ktlint") version "10.0.0"
+    id("org.jlleitschuh.gradle.ktlint") version "10.3.0"
 }
 
 repositories {
@@ -30,23 +30,25 @@ dependencies {
     implementation(kotlin("stdlib"))
 
     // Apollo and dependencies
-    implementation("com.apollographql.apollo3:apollo-runtime:3.0.0-alpha02")
-    implementation("com.squareup.okio:okio:2.4.3")
-    implementation("org.jetbrains:annotations:20.1.0")
-    testImplementation("org.jetbrains:annotations:20.1.0")
+    implementation("com.apollographql.apollo3:apollo-runtime:3.5.0")
+    implementation("com.squareup.okio:okio:3.2.0")
+    implementation("org.jetbrains:annotations:23.0.0")
+    testImplementation("org.jetbrains:annotations:23.0.0")
 
     // Lets-plot
-    implementation("org.openjfx:javafx-swing:16-ea+6")
-    implementation("org.openjfx:javafx:16-ea+6")
-    implementation("org.jetbrains.lets-plot:lets-plot-common:2.0.4")
-    implementation("org.jetbrains.lets-plot:lets-plot-jfx:2.0.4")
-    implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:3.0.1")
+    implementation("org.openjfx:javafx-swing:20-ea+1")
+    implementation("org.openjfx:javafx:20-ea+1")
+    implementation("org.jetbrains.lets-plot:lets-plot-common:2.4.0")
+    implementation("org.jetbrains.lets-plot:lets-plot-jfx:2.4.0")
+    implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.0.0")
 }
 
 apollo {
+    packageName.set("nl.deltadak.texifystats")
+
     srcDir("src/main/graphql")
-    include.add("**/*.graphql")
-    exclude.add("**/schema.graphql")
+    includes.add("**/*.graphql")
+    excludes.add("**/schema.graphql")
 }
 
 javafx {

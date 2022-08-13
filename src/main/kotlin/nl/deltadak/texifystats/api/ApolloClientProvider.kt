@@ -18,10 +18,10 @@ fun getApolloClient(authHeader: String): ApolloClient {
         }
         .build()
 
-    return ApolloClient(
-        networkTransport = HttpNetworkTransport(
-            httpRequestComposer = DefaultHttpRequestComposer(serverUrl),
-            engine = DefaultHttpEngine(okHttpClient = okHttpClient)
-        )
-    )
+    return ApolloClient.Builder().networkTransport(
+        HttpNetworkTransport.Builder()
+            .httpRequestComposer(DefaultHttpRequestComposer(serverUrl))
+            .httpEngine(DefaultHttpEngine(okHttpClient = okHttpClient))
+            .build()
+    ).build()
 }

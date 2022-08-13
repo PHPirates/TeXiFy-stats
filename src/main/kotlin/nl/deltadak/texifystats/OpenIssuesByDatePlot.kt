@@ -1,13 +1,12 @@
 package nl.deltadak.texifystats
 
-import OpenIssuesQuery
-import jetbrains.letsPlot.geom.geomHistogram
-import jetbrains.letsPlot.ggplot
-import jetbrains.letsPlot.label.ggtitle
-import jetbrains.letsPlot.scale.scaleXDateTime
 import nl.deltadak.texifystats.api.getApolloClient
 import nl.deltadak.texifystats.plots.PlotSize
 import nl.deltadak.texifystats.plots.showPlot
+import org.jetbrains.letsPlot.geom.geomHistogram
+import org.jetbrains.letsPlot.ggplot
+import org.jetbrains.letsPlot.label.ggtitle
+import org.jetbrains.letsPlot.scale.scaleXDateTime
 import java.time.Instant
 
 /**
@@ -38,7 +37,7 @@ class OpenIssuesByDatePlot(private val githubToken: String) {
         val apolloClient = getApolloClient(githubToken)
 
         val query = OpenIssuesQuery("TeXiFy-IDEA", "Hannah-Sten")
-        val dataResponse = apolloClient.query(query)
+        val dataResponse = apolloClient.query(query).execute()
         val data = dataResponse.data
 
         if (data == null) {

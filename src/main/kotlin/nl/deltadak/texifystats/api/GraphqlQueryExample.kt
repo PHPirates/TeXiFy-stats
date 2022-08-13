@@ -1,6 +1,6 @@
 package nl.deltadak.texifystats.api
 
-import ViewLoginQuery
+import nl.deltadak.texifystats.ViewLoginQuery
 import kotlin.system.exitProcess
 
 suspend fun main(args: Array<String>) {
@@ -8,7 +8,7 @@ suspend fun main(args: Array<String>) {
 
     val query = ViewLoginQuery()
 
-    val dataResponse = apolloClient.query(query)
+    val dataResponse = apolloClient.query(query).execute()
     val data = dataResponse.data
 
     if (data == null) {
