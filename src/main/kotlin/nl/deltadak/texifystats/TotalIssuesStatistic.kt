@@ -47,7 +47,6 @@ class TotalIssuesStatistic(private val githubToken: String, private val debug: B
     // Unfortunately Edge and Edge1 are separate classes, so we can't abstract the foreach loop
     @Suppress("DuplicatedCode")
     private suspend fun receiveData(data: TotalIssuesQuery.Data, plotFunctions: List<PlotFunction>) {
-
         val issueEdges = data.repository?.issues?.edges ?: throw IllegalStateException("No data found")
 
         // Read open and close dates for issues
@@ -135,7 +134,7 @@ class TotalIssuesStatistic(private val githubToken: String, private val debug: B
         val n = takeLastEvents ?: eventList.size
         val plotData = mapOf<String, Any>(
             "date" to eventList.map { it.time.toEpochMilli() }.takeLast(n),
-            "count" to totalIssuesList.takeLast(n)
+            "count" to totalIssuesList.takeLast(n),
         )
 
         val plot = ggplot(plotData) + geomLine { x = "date"; y = "count" } + scaleXDateTime() + ggtitle("Total open $type over time")
@@ -147,11 +146,11 @@ class TotalIssuesStatistic(private val githubToken: String, private val debug: B
         val n = takeLastEvents ?: eventList.size
         val notDuplicates = mapOf<String, Any>(
             // Take last n before filtering, to ensure a fair view
-            "date" to eventList.takeLast(n).filter { it.action == Action.OPEN && !it.labels.contains("duplicate") }.map { it.time.toEpochMilli() }
+            "date" to eventList.takeLast(n).filter { it.action == Action.OPEN && !it.labels.contains("duplicate") }.map { it.time.toEpochMilli() },
         )
 
         val allIssues = mapOf<String, Any>(
-            "date" to eventList.takeLast(n).filter { it.action == Action.OPEN }.map { it.time.toEpochMilli() }
+            "date" to eventList.takeLast(n).filter { it.action == Action.OPEN }.map { it.time.toEpochMilli() },
         )
 
         // Note that when a bin width of a day is selected, takeLastEvents should be <= 500

@@ -16,13 +16,12 @@ import java.time.Instant
 class OpenIssuesByDatePlot(private val githubToken: String) {
 
     private fun receiveData(queryData: OpenIssuesQuery.Data) {
-
         val creationDatesList = queryData.repository?.issues?.nodes?.mapNotNull {
             Instant.parse(it?.createdAt.toString()).toEpochMilli()
         } ?: throw IllegalStateException("No creation dates present")
 
         val data = mapOf<String, Any>(
-            "x" to creationDatesList
+            "x" to creationDatesList,
         )
 
         val geom = geomHistogram(alpha = 0.3) {

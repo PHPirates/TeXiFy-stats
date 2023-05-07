@@ -44,11 +44,13 @@ dependencies {
 }
 
 apollo {
-    packageName.set("nl.deltadak.texifystats")
+    service("github") {
+        packageName.set("nl.deltadak.texifystats")
 
-    srcDir("src/main/graphql")
-    includes.add("**/*.graphql")
-    excludes.add("**/schema.graphql")
+        srcDir("src/main/graphql")
+        includes.add("**/*.graphql")
+        excludes.add("**/schema.graphql")
+    }
 }
 
 javafx {

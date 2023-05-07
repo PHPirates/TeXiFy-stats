@@ -22,6 +22,6 @@ fun getApolloClient(authHeader: String): ApolloClient {
         HttpNetworkTransport.Builder()
             .httpRequestComposer(DefaultHttpRequestComposer(serverUrl))
             .httpEngine(DefaultHttpEngine(okHttpClient = okHttpClient))
-            .build()
+            .build(),
     ).build()
 }

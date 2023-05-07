@@ -10,7 +10,6 @@ import org.jetbrains.letsPlot.scale.scaleXDateTime
 import kotlin.random.Random
 
 fun main() {
-
     val second = 1000.0
     val minute = 60.0 * second
     val hour = 60.0 * minute
@@ -23,7 +22,7 @@ fun main() {
 
     val daysData = mapOf<String, Any>(
         "days" to (0..nDays).map { instant.timeSinceEpoch + it * day },
-        "val" to (0..nDays).map { rnd.nextDouble(0.0, 20.0) }
+        "val" to (0..nDays).map { rnd.nextDouble(0.0, 20.0) },
     )
 
     val plot = ggplot(daysData) +

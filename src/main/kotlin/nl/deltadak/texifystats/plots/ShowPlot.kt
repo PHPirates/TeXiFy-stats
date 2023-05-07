@@ -22,7 +22,7 @@ fun showPlot(plots: Map<String, Plot>, windowSize: PlotSize = PlotSize.LARGE) {
     val controller = Controller(
         plots,
         selectedPlotKey,
-        false
+        false,
     )
 
     val window = JFrame("Example App")
@@ -39,7 +39,7 @@ fun showPlot(plots: Map<String, Plot>, windowSize: PlotSize = PlotSize.LARGE) {
                     addActionListener {
                         controller.plotKey = this.text
                     }
-                }
+                },
             )
         }
 
@@ -49,7 +49,7 @@ fun showPlot(plots: Map<String, Plot>, windowSize: PlotSize = PlotSize.LARGE) {
                 for (elem in plotButtonGroup.elements) {
                     add(elem)
                 }
-            }
+            },
         )
 
         // Preserve aspect ratio selector
@@ -59,14 +59,14 @@ fun showPlot(plots: Map<String, Plot>, windowSize: PlotSize = PlotSize.LARGE) {
                 addActionListener {
                     controller.preserveAspectRadio = true
                 }
-            }
+            },
         )
         aspectRadioButtonGroup.add(
             JRadioButton("Fit container", true).apply {
                 addActionListener {
                     controller.preserveAspectRadio = false
                 }
-            }
+            },
         )
 
         this.add(
@@ -75,7 +75,7 @@ fun showPlot(plots: Map<String, Plot>, windowSize: PlotSize = PlotSize.LARGE) {
                 for (elem in aspectRadioButtonGroup.elements) {
                     add(elem)
                 }
-            }
+            },
         )
     }
     window.contentPane.add(controlsPanel)

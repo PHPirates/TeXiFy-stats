@@ -1,2 +1,3 @@
 [*.{kt,kts}]
-disabled_rules = no-wildcard-imports
+ktlint_disabled_rules = no-wildcard-imports
+ij_kotlin_allow_trailing_comma_on_call_site = true
