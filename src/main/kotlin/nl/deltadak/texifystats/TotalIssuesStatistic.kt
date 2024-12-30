@@ -28,10 +28,7 @@ typealias PlotFunction = (TotalIssuesStatistic, Pair<List<OpenCloseEvent>, List<
  * @param debug Whether to use all data available for the plot. If false, only one query will be done (faster), and plots will be shown small.
  * @param onlyOpenIssues Whether to show only open issues over time, or all issues (so total number of submitted issues).
  */
-class TotalIssuesStatistic(private val githubToken: String, private val debug: Boolean = true, private val onlyOpenIssues: Boolean = true, private val takeLastEvents: Int? = null) {
-
-    val repository = "TeXiFy-IDEA"
-    val owner = "Hannah-Sten"
+class TotalIssuesStatistic(private val githubToken: String, private val debug: Boolean = true, private val onlyOpenIssues: Boolean = true, private val takeLastEvents: Int? = null, val owner: String = "Hannah-Sten", val repository: String = "TeXiFy-IDEA") {
 
     // These are instance variables because data is received in batches and collected here
     private val issuesEventList = mutableListOf<OpenCloseEvent>()
