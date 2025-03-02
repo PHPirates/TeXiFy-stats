@@ -20,7 +20,9 @@ enum class Action { OPEN, CLOSE }
 /** An issue was opened or closed. */
 data class OpenCloseEvent(val time: Instant, val action: Action, val labels: List<String> = listOf())
 
-typealias PlotFunction = (TotalIssuesStatistic, Pair<List<OpenCloseEvent>, List<OpenCloseEvent>>) -> Pair<String, Plot>
+typealias PlotFunction = (TotalIssuesStatistic, Pair<List<OpenCloseEvent>, List<OpenCloseEvent>>) -> List<Pair<String, Plot>>
+
+const val recentEvents = 1000
 
 /**
  * Show total open issues over time, and total open pull requests over time.
@@ -81,7 +83,7 @@ class TotalIssuesStatistic(
         // If we have paginated to the end for both issues and pull requests
         if ((issueEdges.isEmpty() && prEdges.isNullOrEmpty()) || debug) {
             val plots =
-                plotFunctions.map {
+                plotFunctions.flatMap {
                     it(this@TotalIssuesStatistic, Pair(issuesEventList, prEventList))
                 }.toTypedArray()
             val titlesAndPlots = mapOf(*plots)
@@ -128,7 +130,7 @@ class TotalIssuesStatistic(
     fun createTotalIssuesPlot(
         list: List<OpenCloseEvent>,
         type: String = "issues",
-    ): Pair<String, Plot> {
+    ): List<Pair<String, Plot>> {
         // Sort the events in order to walk through them and update the total issues counter for each event
         val eventList = list.toMutableList()
         eventList.sortBy { it.time }
@@ -145,21 +147,22 @@ class TotalIssuesStatistic(
             totalIssuesList.add(counter)
         }
 
-        val n = takeLastEvents ?: eventList.size
-        val plotData =
-            mapOf<String, Any>(
-                "date" to eventList.map { it.time.toEpochMilli() }.takeLast(n),
-                "count" to totalIssuesList.takeLast(n),
-            )
+        return listOf(recentEvents, eventList.size).map { n ->
+            val plotData =
+                mapOf<String, Any>(
+                    "date" to eventList.map { it.time.toEpochMilli() }.takeLast(n),
+                    "count" to totalIssuesList.takeLast(n),
+                )
 
-        val plot =
-            ggplot(plotData) +
-                geomLine {
-                    x = "date"
-                    y = "count"
-                } + scaleXDateTime() + ggtitle("Total open $type over time")
+            val plot =
+                ggplot(plotData) +
+                        geomLine {
+                            x = "date"
+                            y = "count"
+                        } + scaleXDateTime() + ggtitle("Total open $type over time")
 
-        return Pair("How many $type are open over time", plot)
+            Pair("How many ${if (n < eventList.size) "recent" else ""} $type are open over time", plot)
+        }
     }
 
     fun showOpenedIssuesPerWeekPlot(
@@ -203,7 +206,7 @@ suspend fun main(args: Array<String>) {
         listOf(
             { s, lists -> s.createTotalIssuesPlot(lists.first, "issues") },
             { s, lists -> s.createTotalIssuesPlot(lists.second, "pull requests") },
-            { s, lists -> s.showOpenedIssuesPerWeekPlot(lists.first, "issues") },
+            { s, lists -> listOf(s.showOpenedIssuesPerWeekPlot(lists.first, "issues")) },
         )
     TotalIssuesStatistic(args[0], debug = false, onlyOpenIssues = true, takeLastEvents = 1000).runQuery(plotFunctions = plotFunctions)
 }
