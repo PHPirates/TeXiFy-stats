@@ -1,11 +1,11 @@
 package nl.deltadak.texifystats.plots
 
 import javafx.application.Platform
-import jetbrains.datalore.base.registration.Disposable
-import jetbrains.datalore.plot.MonolithicCommon
-import jetbrains.datalore.vis.swing.jfx.DefaultPlotPanelJfx
+import org.jetbrains.letsPlot.commons.registration.Disposable
+import org.jetbrains.letsPlot.core.util.MonolithicCommon
 import org.jetbrains.letsPlot.intern.Plot
 import org.jetbrains.letsPlot.intern.toSpec
+import org.jetbrains.letsPlot.jfx.plot.component.DefaultPlotPanelJfx
 import java.awt.Dimension
 import java.awt.GridLayout
 import java.awt.Toolkit
