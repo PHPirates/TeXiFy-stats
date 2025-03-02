@@ -8,15 +8,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v1
-    - name: Build
-      uses: MrRamych/gradle-actions/openjdk-13@3.1
+    - uses: actions/checkout@v4
+    - name: Setup Java
+      uses: actions/setup-java@v4
       with:
-        args: build
-    - name: Cache
-      uses: actions/cache@v1.1.0
-      with:
-        path: ~/.gradle/caches
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle.kts') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
+        distribution: 'zulu'
+        java-version: 23
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+    - name: Build with Gradle
+      run: ./gradlew build
