@@ -28,8 +28,14 @@ typealias PlotFunction = (TotalIssuesStatistic, Pair<List<OpenCloseEvent>, List<
  * @param debug Whether to use all data available for the plot. If false, only one query will be done (faster), and plots will be shown small.
  * @param onlyOpenIssues Whether to show only open issues over time, or all issues (so total number of submitted issues).
  */
-class TotalIssuesStatistic(private val githubToken: String, private val debug: Boolean = true, private val onlyOpenIssues: Boolean = true, private val takeLastEvents: Int? = null, val owner: String = "Hannah-Sten", val repository: String = "TeXiFy-IDEA") {
-
+class TotalIssuesStatistic(
+    private val githubToken: String,
+    private val debug: Boolean = true,
+    private val onlyOpenIssues: Boolean = true,
+    private val takeLastEvents: Int? = null,
+    val owner: String = "Hannah-Sten",
+    val repository: String = "TeXiFy-IDEA",
+) {
     // These are instance variables because data is received in batches and collected here
     private val issuesEventList = mutableListOf<OpenCloseEvent>()
     private val prEventList = mutableListOf<OpenCloseEvent>()
@@ -41,11 +47,14 @@ class TotalIssuesStatistic(private val githubToken: String, private val debug: B
     /**
      * Updates Issue and PR event lists.
      */
-    // Unfortunately Edge and Edge1 are separate classes, so we can't abstract the foreach loop
     @Suppress("DuplicatedCode")
-    private suspend fun receiveData(data: TotalIssuesQuery.Data, plotFunctions: List<PlotFunction>) {
+    private suspend fun receiveData(
+        data: TotalIssuesQuery.Data,
+        plotFunctions: List<PlotFunction>,
+    ) {
         val issueEdges = data.repository?.issues?.edges ?: throw IllegalStateException("No data found")
 
+        // Unfortunately Edge and Edge1 are separate classes, so we can't abstract the foreach loop
         // Read open and close dates for issues
         issueEdges.forEach {
             val node = it?.node ?: return@forEach
@@ -71,9 +80,10 @@ class TotalIssuesStatistic(private val githubToken: String, private val debug: B
 
         // If we have paginated to the end for both issues and pull requests
         if ((issueEdges.isEmpty() && prEdges.isNullOrEmpty()) || debug) {
-            val plots = plotFunctions.map {
-                it(this@TotalIssuesStatistic, Pair(issuesEventList, prEventList))
-            }.toTypedArray()
+            val plots =
+                plotFunctions.map {
+                    it(this@TotalIssuesStatistic, Pair(issuesEventList, prEventList))
+                }.toTypedArray()
             val titlesAndPlots = mapOf(*plots)
             showPlot(titlesAndPlots, if (debug) PlotSize.SMALL else PlotSize.LARGE)
         } else {
@@ -91,7 +101,11 @@ class TotalIssuesStatistic(private val githubToken: String, private val debug: B
      *
      * When the query is received, if needed in the response handling a new query will be sent for the next page.
      */
-    suspend fun runQuery(issuesCursor: String? = null, pullRequestCursor: String? = null, plotFunctions: List<PlotFunction>) {
+    suspend fun runQuery(
+        issuesCursor: String? = null,
+        pullRequestCursor: String? = null,
+        plotFunctions: List<PlotFunction>,
+    ) {
         val apolloClient = getApolloClient(githubToken)
 
         val query = TotalIssuesQuery(repository, owner, Optional.Present(issuesCursor), Optional.Present(pullRequestCursor), 100)
@@ -111,7 +125,10 @@ class TotalIssuesStatistic(private val githubToken: String, private val debug: B
     /**
      * @param type Used for the title.
      */
-    fun createTotalIssuesPlot(list: List<OpenCloseEvent>, type: String = "issues"): Pair<String, Plot> {
+    fun createTotalIssuesPlot(
+        list: List<OpenCloseEvent>,
+        type: String = "issues",
+    ): Pair<String, Plot> {
         // Sort the events in order to walk through them and update the total issues counter for each event
         val eventList = list.toMutableList()
         eventList.sortBy { it.time }
@@ -129,33 +146,49 @@ class TotalIssuesStatistic(private val githubToken: String, private val debug: B
         }
 
         val n = takeLastEvents ?: eventList.size
-        val plotData = mapOf<String, Any>(
-            "date" to eventList.map { it.time.toEpochMilli() }.takeLast(n),
-            "count" to totalIssuesList.takeLast(n),
-        )
+        val plotData =
+            mapOf<String, Any>(
+                "date" to eventList.map { it.time.toEpochMilli() }.takeLast(n),
+                "count" to totalIssuesList.takeLast(n),
+            )
 
-        val plot = ggplot(plotData) + geomLine { x = "date"; y = "count" } + scaleXDateTime() + ggtitle("Total open $type over time")
+        val plot =
+            ggplot(plotData) +
+                geomLine {
+                    x = "date"
+                    y = "count"
+                } + scaleXDateTime() + ggtitle("Total open $type over time")
 
         return Pair("How many $type are open over time", plot)
     }
 
-    fun showOpenedIssuesPerWeekPlot(eventList: List<OpenCloseEvent>, type: String): Pair<String, Plot> {
+    fun showOpenedIssuesPerWeekPlot(
+        eventList: List<OpenCloseEvent>,
+        type: String,
+    ): Pair<String, Plot> {
         val n = takeLastEvents ?: eventList.size
-        val notDuplicates = mapOf<String, Any>(
-            // Take last n before filtering, to ensure a fair view
-            "date" to eventList.takeLast(n).filter { it.action == Action.OPEN && !it.labels.contains("duplicate") }.map { it.time.toEpochMilli() },
-        )
+        val notDuplicates =
+            mapOf<String, Any>(
+                // Take last n before filtering, to ensure a fair view
+                "date" to
+                    eventList
+                        .takeLast(n)
+                        .filter { it.action == Action.OPEN && !it.labels.contains("duplicate") }
+                        .map { it.time.toEpochMilli() },
+            )
 
-        val allIssues = mapOf<String, Any>(
-            "date" to eventList.takeLast(n).filter { it.action == Action.OPEN }.map { it.time.toEpochMilli() },
-        )
+        val allIssues =
+            mapOf<String, Any>(
+                "date" to eventList.takeLast(n).filter { it.action == Action.OPEN }.map { it.time.toEpochMilli() },
+            )
 
         // Note that when a bin width of a day is selected, takeLastEvents should be <= 500
         val binWidth = 1000.0 * 60 * 60 * 24 * 7 * 4
-        val plot = ggplot(allIssues) +
-            geomHistogram(data = allIssues, stat = Stat.bin(binWidth = binWidth), fill = "blue") { x = "date" } +
-            geomHistogram(data = notDuplicates, stat = Stat.bin(binWidth = binWidth), fill = "red") { x = "date" } +
-            scaleXDateTime() + ggtitle("New $type per 4 weeks: blue are all issues, red are issues that are not a duplicate")
+        val plot =
+            ggplot(allIssues) +
+                geomHistogram(data = allIssues, stat = Stat.bin(binWidth = binWidth), fill = "blue") { x = "date" } +
+                geomHistogram(data = notDuplicates, stat = Stat.bin(binWidth = binWidth), fill = "red") { x = "date" } +
+                scaleXDateTime() + ggtitle("New $type per 4 weeks: blue are all issues, red are issues that are not a duplicate")
 
         return Pair("How many issues were opened per time window.", plot)
     }
@@ -166,10 +199,11 @@ suspend fun main(args: Array<String>) {
         throw IllegalArgumentException("You need to provide the GitHub token as an argument")
     }
 
-    val plotFunctions: List<PlotFunction> = listOf(
-        { s, lists -> s.createTotalIssuesPlot(lists.first, "issues") },
-        { s, lists -> s.createTotalIssuesPlot(lists.second, "pull requests") },
-        { s, lists -> s.showOpenedIssuesPerWeekPlot(lists.first, "issues") },
-    )
+    val plotFunctions: List<PlotFunction> =
+        listOf(
+            { s, lists -> s.createTotalIssuesPlot(lists.first, "issues") },
+            { s, lists -> s.createTotalIssuesPlot(lists.second, "pull requests") },
+            { s, lists -> s.showOpenedIssuesPerWeekPlot(lists.first, "issues") },
+        )
     TotalIssuesStatistic(args[0], debug = false, onlyOpenIssues = true, takeLastEvents = 1000).runQuery(plotFunctions = plotFunctions)
 }

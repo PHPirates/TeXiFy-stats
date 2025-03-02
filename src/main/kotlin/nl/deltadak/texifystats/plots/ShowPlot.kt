@@ -17,67 +17,72 @@ enum class PlotSize { SMALL, LARGE }
 /**
  * Adapted from https://github.com/JetBrains/lets-plot-kotlin/blob/2cc96fd3ce258a61edbb5e741a8fc9ab4ad863d1/demo/jvm-javafx/src/main/kotlin/minimalDemo/Main.kt
  */
-fun showPlot(plots: Map<String, Plot>, windowSize: PlotSize = PlotSize.LARGE) {
+fun showPlot(
+    plots: Map<String, Plot>,
+    windowSize: PlotSize = PlotSize.LARGE,
+) {
     val selectedPlotKey = plots.keys.first()
-    val controller = Controller(
-        plots,
-        selectedPlotKey,
-        false,
-    )
+    val controller =
+        Controller(
+            plots,
+            selectedPlotKey,
+            false,
+        )
 
     val window = JFrame("Example App")
     window.defaultCloseOperation = EXIT_ON_CLOSE
     window.contentPane.layout = BoxLayout(window.contentPane, BoxLayout.Y_AXIS)
 
     // Add controls
-    val controlsPanel = Box.createHorizontalBox().apply {
-        // Plot selector
-        val plotButtonGroup = ButtonGroup()
-        for (key in plots.keys) {
-            plotButtonGroup.add(
-                JRadioButton(key, key == selectedPlotKey).apply {
+    val controlsPanel =
+        Box.createHorizontalBox().apply {
+            // Plot selector
+            val plotButtonGroup = ButtonGroup()
+            for (key in plots.keys) {
+                plotButtonGroup.add(
+                    JRadioButton(key, key == selectedPlotKey).apply {
+                        addActionListener {
+                            controller.plotKey = this.text
+                        }
+                    },
+                )
+            }
+
+            this.add(
+                Box.createHorizontalBox().apply {
+                    border = BorderFactory.createTitledBorder("Plot")
+                    for (elem in plotButtonGroup.elements) {
+                        add(elem)
+                    }
+                },
+            )
+
+            // Preserve aspect ratio selector
+            val aspectRadioButtonGroup = ButtonGroup()
+            aspectRadioButtonGroup.add(
+                JRadioButton("Original", false).apply {
                     addActionListener {
-                        controller.plotKey = this.text
+                        controller.preserveAspectRadio = true
+                    }
+                },
+            )
+            aspectRadioButtonGroup.add(
+                JRadioButton("Fit container", true).apply {
+                    addActionListener {
+                        controller.preserveAspectRadio = false
+                    }
+                },
+            )
+
+            this.add(
+                Box.createHorizontalBox().apply {
+                    border = BorderFactory.createTitledBorder("Aspect ratio")
+                    for (elem in aspectRadioButtonGroup.elements) {
+                        add(elem)
                     }
                 },
             )
         }
-
-        this.add(
-            Box.createHorizontalBox().apply {
-                border = BorderFactory.createTitledBorder("Plot")
-                for (elem in plotButtonGroup.elements) {
-                    add(elem)
-                }
-            },
-        )
-
-        // Preserve aspect ratio selector
-        val aspectRadioButtonGroup = ButtonGroup()
-        aspectRadioButtonGroup.add(
-            JRadioButton("Original", false).apply {
-                addActionListener {
-                    controller.preserveAspectRadio = true
-                }
-            },
-        )
-        aspectRadioButtonGroup.add(
-            JRadioButton("Fit container", true).apply {
-                addActionListener {
-                    controller.preserveAspectRadio = false
-                }
-            },
-        )
-
-        this.add(
-            Box.createHorizontalBox().apply {
-                border = BorderFactory.createTitledBorder("Aspect ratio")
-                for (elem in aspectRadioButtonGroup.elements) {
-                    add(elem)
-                }
-            },
-        )
-    }
     window.contentPane.add(controlsPanel)
 
     // Add plot panel
@@ -91,11 +96,12 @@ fun showPlot(plots: Map<String, Plot>, windowSize: PlotSize = PlotSize.LARGE) {
     val width = screenSize.getWidth()
     val height = screenSize.getHeight()
 
-    val plotSize = if (windowSize == PlotSize.SMALL) {
-        Dimension(600, 300)
-    } else {
-        Dimension(width.toInt() - 70, height.toInt() - 70)
-    }
+    val plotSize =
+        if (windowSize == PlotSize.SMALL) {
+            Dimension(600, 300)
+        } else {
+            Dimension(width.toInt() - 70, height.toInt() - 70)
+        }
 
     SwingUtilities.invokeLater {
         window.pack()
@@ -108,7 +114,7 @@ fun showPlot(plots: Map<String, Plot>, windowSize: PlotSize = PlotSize.LARGE) {
 private class Controller(
     private val plots: Map<String, Plot>,
     initialPlotKey: String,
-    initialPreserveAspectRadio: Boolean
+    initialPreserveAspectRadio: Boolean,
 ) {
     var plotContainerPanel: JPanel? = null
     var plotKey: String = initialPlotKey

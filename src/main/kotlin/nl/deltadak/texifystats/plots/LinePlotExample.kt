@@ -20,14 +20,19 @@ fun main() {
     val nDays = 30
     val rnd = Random(0)
 
-    val daysData = mapOf<String, Any>(
-        "days" to (0..nDays).map { instant.timeSinceEpoch + it * day },
-        "val" to (0..nDays).map { rnd.nextDouble(0.0, 20.0) },
-    )
+    val daysData =
+        mapOf<String, Any>(
+            "days" to (0..nDays).map { instant.timeSinceEpoch + it * day },
+            "val" to (0..nDays).map { rnd.nextDouble(0.0, 20.0) },
+        )
 
-    val plot = ggplot(daysData) +
-        geomLine { x = "days"; y = "val" } +
-        scaleXDateTime()
+    val plot =
+        ggplot(daysData) +
+            geomLine {
+                x = "days"
+                y = "val"
+            } +
+            scaleXDateTime()
 
     showPlot(mapOf("Line plot" to plot))
 }

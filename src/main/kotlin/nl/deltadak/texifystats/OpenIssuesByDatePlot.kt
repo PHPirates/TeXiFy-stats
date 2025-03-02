@@ -14,19 +14,21 @@ import java.time.Instant
  * Will be shown as a histogram.
  */
 class OpenIssuesByDatePlot(private val githubToken: String) {
-
     private fun receiveData(queryData: OpenIssuesQuery.Data) {
-        val creationDatesList = queryData.repository?.issues?.nodes?.mapNotNull {
-            Instant.parse(it?.createdAt.toString()).toEpochMilli()
-        } ?: throw IllegalStateException("No creation dates present")
+        val creationDatesList =
+            queryData.repository?.issues?.nodes?.mapNotNull {
+                Instant.parse(it?.createdAt.toString()).toEpochMilli()
+            } ?: throw IllegalStateException("No creation dates present")
 
-        val data = mapOf<String, Any>(
-            "x" to creationDatesList,
-        )
+        val data =
+            mapOf<String, Any>(
+                "x" to creationDatesList,
+            )
 
-        val geom = geomHistogram(alpha = 0.3) {
-            x = "x"
-        }
+        val geom =
+            geomHistogram(alpha = 0.3) {
+                x = "x"
+            }
         val p = ggplot(data) + geom + scaleXDateTime() + ggtitle("Creation dates of open issues")
 
         showPlot(mapOf("Open issues by date" to p), PlotSize.LARGE)

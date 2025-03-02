@@ -10,18 +10,15 @@ fun getApolloClient(authHeader: String): ApolloClient {
     val serverUrl = "https://api.github.com/graphql"
 
     // Add authentication header for GitHub
-    val okHttpClient = OkHttpClient.Builder()
-        .addInterceptor { chain ->
+    val okHttpClient =
+        OkHttpClient.Builder().addInterceptor { chain ->
             val builder = chain.request().newBuilder()
             builder.header("Authorization", "Bearer $authHeader")
             chain.proceed(builder.build())
-        }
-        .build()
+        }.build()
 
     return ApolloClient.Builder().networkTransport(
-        HttpNetworkTransport.Builder()
-            .httpRequestComposer(DefaultHttpRequestComposer(serverUrl))
-            .httpEngine(DefaultHttpEngine(okHttpClient = okHttpClient))
-            .build(),
+        HttpNetworkTransport.Builder().httpRequestComposer(DefaultHttpRequestComposer(serverUrl))
+            .httpEngine(DefaultHttpEngine(okHttpClient = okHttpClient)).build(),
     ).build()
 }
